@@ -110,7 +110,7 @@ if __name__ == '__main__':
 	
 	logger = get_logger(args.logger, args.output, project=args.project, workspace=args.workspace)
 	
-	model = available.models[args.model].Model(args).to(device)
+	model = available.models[args.model].Model(args).to(args.device)
 	assert (args.seq_len - args.tgt_len) % 2 == 0
 	dataset = OneSequenceDataset(args.data, args.tgt_len, int((args.seq_len - args.tgt_len) / 2))
 	
