@@ -69,6 +69,6 @@ CPU=2
 T=600
 hse-run:
 	echo "#!/bin/bash" > tmp_script.sh; \
-	make $(TARGET) --just-print --dry-run -s >> tmp_script.sh; \
+	make $(TARGET) --just-print --dry-run -s >> tmp_script.sh;
 	sbatch --gpus=$(GPU) -c $(CPU) -t $(T) tmp_script.sh; \
 	rm tmp_script.sh
