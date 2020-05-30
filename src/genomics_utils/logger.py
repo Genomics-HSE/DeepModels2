@@ -2,8 +2,10 @@ import os
 import json
 
 import numpy as np
-from comet_ml import Experiment as CometExperiment
+from comet_ml import Experiment, OfflineExperiment
 import matplotlib.pyplot as plt
+
+from genomics_utils import ensure_directories
 
 __all__ = [
 	'LocalLogger', 'CometLogger',
@@ -76,7 +78,7 @@ class CometLogger(LocalLogger):
     Comet ml logger
     """
 	
-	def __init__(self, root, experiment: CometExperiment):
+	def __init__(self, root, experiment):
 		self._experiment = experiment
 		
 		super(CometLogger, self).__init__(root)
@@ -99,7 +101,7 @@ class CometLogger(LocalLogger):
 		plt.close(f)
 
 
-def get_logger(logger, root, project=None, workspace=None) -> Logger:
+def get_logger(logger, root, project=None, workspace=None, offline=True) -> Logger:
 	from genomics_utils import LocalLogger, CometLogger
 	
 	if logger.lower() == "local":
@@ -109,7 +111,14 @@ def get_logger(logger, root, project=None, workspace=None) -> Logger:
 		assert project is not None, 'for comet logger, please, provide project name'
 		assert workspace is not None, 'for comet logger, please, provide workspace'
 		
-		experiment = CometExperiment(project_name=project, workspace=workspace)
+		if offline:
+			comet_path, = ensure_directories(root, "comet/")
+			experiment = OfflineExperiment(project_name=project,
+										   workspace=workspace,
+										   offline_directory=comet_path
+										   )
+		else:
+			experiment = Experiment(project_name=project, workspace=workspace)
 		return CometLogger(root=root, experiment=experiment)
 	
 	else:

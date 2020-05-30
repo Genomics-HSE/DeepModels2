@@ -82,6 +82,7 @@ if __name__ == '__main__':
 	parser.add_argument('--logger', type=str, choices=['local', 'comet'], default='local')
 	parser.add_argument('--project', type=str, default=None, help='project name for comet logger, None by default')
 	parser.add_argument('--workspace', type=str, default=None, help='workspace for comet logger, None by default')
+	parser.add_argument('--offline', type=bool, default=True, help='logger mode')
 	parser.add_argument('--quiet', type=bool, default=False)
 	parser.add_argument('--seq_len', type=int, default=1)
 	parser.add_argument('--tgt_len', type=int, default=1)
