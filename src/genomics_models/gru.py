@@ -46,7 +46,7 @@ class EncoderGRU(nn.Module):
 		:param input: (batch_size, seq_len, input_size)
 		:return:
 		"""
-		input = input.type(torch.FloatTensor)
+		input = input.float()
 		input = input.unsqueeze(-1)
 		outputs, _ = self.gru(input)
 		
