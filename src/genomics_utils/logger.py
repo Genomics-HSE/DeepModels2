@@ -32,6 +32,12 @@ class Logger(object):
 	
 	def log_losses(self, dataset_name, model_name, losses):
 		raise NotImplementedError()
+	
+	def set_name(self, name):
+		pass
+	
+	def log_metric(self, *args, **kwargs):
+		pass
 
 
 class LocalLogger(Logger):

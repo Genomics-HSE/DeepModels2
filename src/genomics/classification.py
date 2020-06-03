@@ -5,9 +5,10 @@ import torch
 
 
 class Classifier(object):
-	def __init__(self, classifier, device, lr=1e-3):
+	def __init__(self, classifier, logger, device, lr=1e-3):
 		self.classifier = classifier
 		self.device = device
+		self.logger = logger
 		self.loss = torch.nn.CrossEntropyLoss()
 		self.optimizer = torch.optim.Adam(
 			params=self.classifier.parameters(),
@@ -34,7 +35,8 @@ class Classifier(object):
 				self.optimizer.step()
 				
 				losses[i, j] = loss.item()
-		
+			
+			self.logger.log_metric("epoch_loss", losses[i].mean())
 		return losses
 	
 	def predict(self, dataloader):

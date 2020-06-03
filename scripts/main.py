@@ -28,19 +28,17 @@ def train(dataset, model, device, seed, n_epochs, batch_size,
 			  }
 	
 	train_loader = data.DataLoader(dataset.train_set, **params)
-	clf = Classifier(model, device=device)
+	clf = Classifier(model, logger=logger, device=device)
 	if not quiet:
 		print("Running {}-model...".format(model.name))
 	losses = clf.fit(train_loader, n_epochs=n_epochs, progress=None if quiet else tqdm)
 	
 	clf.save(parameters_path, quiet)
 	
-	logger.log_losses("", model.name, losses)
-
+	logger.log_losses("dataset", model.name, losses)
 
 def test(dataset, model, device, batch_size,
 		 output_path, logger, project, workspace):
-	log = get_logger(logger, output_path, project, workspace)
 	
 	model_root, = ensure_directories(output_path, 'models/')
 	parameters_path = os.path.join(
@@ -53,7 +51,7 @@ def test(dataset, model, device, batch_size,
 	train_loader = torch.utils.data.DataLoader(dataset.train_set, batch_size=batch_size, shuffle=True)
 	test_loader = torch.utils.data.DataLoader(dataset.test_set, batch_size=batch_size, shuffle=True)
 	
-	clf = Classifier(model, device=device)
+	clf = Classifier(model, logger=logger, device=device)
 	
 	state_dict = torch.load(parameters_path)
 	clf.classifier.load_state_dict(state_dict)
@@ -64,7 +62,7 @@ def test(dataset, model, device, batch_size,
 	accuracy_train = np.mean(np.argmax(predictions_train, axis=1) == true_train)
 	accuracy_test = np.mean(np.argmax(predictions_test, axis=1) == true_test)
 	
-	log.log_metrics("d", model.name, accuracy_train=accuracy_train, accuracy_test=accuracy_test)
+	logger.log_metrics("d", model.name, accuracy_train=accuracy_train, accuracy_test=accuracy_test)
 
 
 if __name__ == '__main__':
@@ -108,9 +106,11 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 	print(args)
 	
-	logger = get_logger(args.logger, args.output, project=args.project, workspace=args.workspace)
-	
 	model = available.models[args.model].Model(args).to(args.device)
+
+	logger = get_logger(args.logger, args.output, project=args.project, workspace=args.workspace)
+	logger.set_name(model.name)
+	
 	assert (args.seq_len - args.tgt_len) % 2 == 0
 	dataset = OneSequenceDataset(args.data, args.tgt_len, int((args.seq_len - args.tgt_len) / 2))
 	
@@ -122,11 +122,17 @@ if __name__ == '__main__':
 			output_path=args.output, logger=logger,
 			num_workers=args.num_workers, quiet=args.quiet
 		)
+		test(
+			dataset=dataset, model=model,
+			device=args.device, batch_size=args.batch_size,
+			output_path=args.output, logger=logger, project=args.project,
+			workspace=args.workspace
+		)
 	elif args.action == 'test':
 		test(
 			dataset=dataset, model=model,
 			device=args.device, batch_size=args.batch_size,
-			output_path=args.output, logger=args.logger, project=args.project,
+			output_path=args.output, logger=logger, project=args.project,
 			workspace=args.workspace
 		)
 	else:
