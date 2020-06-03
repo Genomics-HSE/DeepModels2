@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class Model:
@@ -38,7 +39,9 @@ class EncoderGRU(nn.Module):
 						  bidirectional=bidirectional,
 						  dropout=dropout
 						  )
-		self.dense = nn.Linear((1 + bidirectional) * hidden_size, n_output)
+		self.dense1 = nn.Linear((1 + bidirectional) * hidden_size, hidden_size)
+		self.dense2 = nn.Linear(hidden_size, hidden_size // 2)
+		self.dense3 = nn.Linear(hidden_size // 2, n_output)
 	
 	def forward(self, input):
 		"""
@@ -52,7 +55,11 @@ class EncoderGRU(nn.Module):
 		
 		start_pos = int((self.inp_seq_len - self.tgt_len) / 2)
 		reduced_outputs = outputs.narrow(1, start_pos, self.tgt_len)
-		pred = self.dense(reduced_outputs)
+		
+		pred = F.relu(self.dense1(reduced_outputs))
+		pred = F.relu(self.dense2(pred))
+		pred = self.dense3(pred)
+		
 		pred = pred.permute(0, 2, 1)
 		return pred
 	
