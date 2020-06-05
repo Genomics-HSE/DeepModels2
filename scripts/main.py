@@ -89,7 +89,7 @@ if __name__ == '__main__':
 	parser.add_argument('--action', type=str, choices=['train', 'test'])
 	parser.add_argument('--seed', type=int, default=42)
 	parser.add_argument('--epochs', type=int, default=16)
-	parser.add_argument('--lr', type=float, default=0.001)
+	parser.add_argument('--lr', type=float, default=0.01)
 	
 	model_parsers = parser.add_subparsers(title='models', description='model to choose', dest='model')
 	gru_parser = model_parsers.add_parser('gru')
@@ -100,14 +100,21 @@ if __name__ == '__main__':
 	gru_parser.add_argument('--bidirectional', type=bool, default=True)
 	gru_parser.add_argument('--dropout', type=float, default=0.1)
 	
-	# linear_parser = model_parsers.add_parser("linear")
-	# linear_parser.add_argument()
+	conv_parser = model_parsers.add_parser('conv')
+	conv_parser.add_argument('--n_token_in', type=int, default=2)
+	conv_parser.add_argument('--emb_size', type=int, default=256)
+	conv_parser.add_argument('--hidden_size', type=int, default=512)
+	conv_parser.add_argument('--kernel_size', type=int, default=1024)
+	conv_parser.add_argument('--n_layers', type=int, default=10)
+	conv_parser.add_argument('--dropout', type=float, default=0.1)
 	
 	args = parser.parse_args()
 	print(args)
 	
 	model = available.models[args.model].Model(args).to(args.device)
-
+	
+	print(model.name)
+	
 	logger = get_logger(args.logger, args.output, project=args.project, workspace=args.workspace)
 	logger.set_name(model.name)
 	
