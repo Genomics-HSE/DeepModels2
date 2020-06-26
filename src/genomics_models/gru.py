@@ -55,7 +55,7 @@ class EncoderGRU(nn.Module):
         outputs, _ = self.gru(input)
         
         start_pos = int((self.inp_seq_len - self.tgt_len) / 2)
-        reduced_outputs = outputs.narrow(1, start_pos, self.tgt_len)
+        reduced_outputs = outputs # .narrow(1, start_pos, self.tgt_len)
         
         pred = F.relu(self.dense1(reduced_outputs))
         pred = F.relu(self.dense2(pred))

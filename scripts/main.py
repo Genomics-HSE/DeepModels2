@@ -45,25 +45,27 @@ def test(dataset, model, device, batch_size,
 		model_root,
 		'{model}.pt'.format(model=model.name)
 	)
-	
 	device = torch.device(device)
 	
-	train_loader = torch.utils.data.DataLoader(dataset.train_set, batch_size=batch_size, shuffle=True)
-	test_loader = torch.utils.data.DataLoader(dataset.test_set, batch_size=batch_size, shuffle=True)
+	# train_loader = torch.utils.data.DataLoader(dataset.train_set, batch_size=batch_size, shuffle=True)
+	# test_loader = torch.utils.data.DataLoader(dataset.test_set, batch_size=batch_size, shuffle=True)
 	
 	clf = Classifier(model, logger=logger, device=device)
 	
-	state_dict = torch.load(parameters_path)
+	state_dict = torch.load(parameters_path, map_location=torch.device(device))
 	clf.classifier.load_state_dict(state_dict)
 	
-	predictions_train, true_train = clf.predict(train_loader)
-	predictions_test, true_test = clf.predict(test_loader)
+	# predictions_train, true_train = clf.predict(train_loader)
+	# predictions_test, true_test = clf.predict(test_loader)
+	#
+	# accuracy_train = np.mean(np.argmax(predictions_train, axis=1) == true_train)
+	# accuracy_test = np.mean(np.argmax(predictions_test, axis=1) == true_test)
 	
-	accuracy_train = np.mean(np.argmax(predictions_train, axis=1) == true_train)
-	accuracy_test = np.mean(np.argmax(predictions_test, axis=1) == true_test)
+	# todo
+	heatmap_preds = clf.predict_proba(dataset.data_path, step=50)
 	
-	logger.log_metrics("d", model.name, accuracy_train=accuracy_train, accuracy_test=accuracy_test)
-
+	# logger.log_metrics("d", model.name, accuracy_train=accuracy_train, accuracy_test=accuracy_test)
+	logger.log_coalescent_heatmap(model.name, heatmap_preds)
 
 if __name__ == '__main__':
 	import argparse

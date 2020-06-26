@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 __all__ = [
-    'make_learning_curve'
+    'make_learning_curve',
+    'make_coalescent_heatmap'
 ]
 
 
@@ -32,4 +34,31 @@ def make_learning_curve(dataset_name, model_name, losses, dpi=100):
     plt.ylabel('cross-entropy')
     plt.legend()
     
+    return f
+
+
+def make_coalescent_heatmap(model_name, averaged_data_tuple, dpi=100):
+    # f = plt.figure(figsize=(20, 10), dpi=dpi)
+    f, ax = plt.subplots(2, 1, figsize=(20, 10), dpi=dpi)
+    im0 = ax[0].imshow(averaged_data_tuple[0], cmap='Wistia')
+    im1 = ax[1].imshow(-averaged_data_tuple[1], cmap='Wistia')
+    ax[0].plot(averaged_data_tuple[2], lw=1, c='black')
+    ax[1].plot(averaged_data_tuple[2], lw=1, c='black')
+    
+    # create an axes on the right side of ax. The width of cax will be 5%
+    # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+    divider = make_axes_locatable(ax[0])
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(im0, cax=cax)
+
+    divider = make_axes_locatable(ax[1])
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(im1, cax=cax)
+
+    plt.suptitle("Coalescent heatmap distribution", fontsize=20)
+    ax[0].set_title("Softmax")
+    ax[1].set_title("Log softmax")
+    plt.xlabel('site position')
+    plt.ylabel('')
+    plt.legend()
     return f

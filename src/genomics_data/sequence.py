@@ -30,13 +30,13 @@ class OneSequenceDataset:
         self.one_side_width = one_side_width
         self.train_part = train_part
         
-        X_seq, Y_seq = get_one_sequence_data(data_path)
-        X_batch, Y_batch = get_batches(X_seq, Y_seq, target_width, one_side_width)
-
-        assert len(X_batch) == len(Y_batch)
-        train_border = int(train_part * len(X_batch))
-        self._train_set = Dataset(X_batch[:train_border], Y_batch[:train_border])
-        self._test_set = Dataset(X_batch[train_border:], Y_batch[train_border:])
+        # X_seq, Y_seq = get_one_sequence_data(data_path)
+        # X_batch, Y_batch = get_batches(X_seq, Y_seq, target_width, one_side_width)
+        #
+        # assert len(X_batch) == len(Y_batch)
+        # train_border = int(train_part * len(X_batch))
+        # self._train_set = Dataset(X_batch[:train_border], Y_batch[:train_border])
+        # self._test_set = Dataset(X_batch[train_border:], Y_batch[train_border:])
 
     @property
     def train_set(self):
