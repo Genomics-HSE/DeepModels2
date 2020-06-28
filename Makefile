@@ -58,7 +58,7 @@ gru-test:
 
 gru-one-dir: gru-one-dir-train gru-one-dir-test
 
-$(call assign-vars, gru-one-dir-train gru-one-dir-train, input_size=1 \
+$(call assign-vars, gru-one-dir-train gru-one-dir-test, input_size=1 \
 								hidden_size=256 \
 								num_layers=4 \
 								batch_first=true \

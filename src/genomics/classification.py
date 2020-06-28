@@ -64,12 +64,11 @@ class Classifier(object):
             hidden_state = self.classifier.get_init_state(1).to(self.device)
             for X, y in tqdm(data_iterator):
                 X = torch.from_numpy(X).to(self.device)
-                y = torch.from_numpy(y).to(self.device)
                 preds, hidden_state = self.classifier(X, hidden_state)
                 preds = preds.squeeze(0)
                 preds = torch.exp(preds)
-                heatmap_predictions.append(np.mean(preds.numpy(), axis=0))
-                ground_truth.append(np.mean(y.numpy(), axis=0))
+                heatmap_predictions.append(np.mean(preds.cpu().numpy(), axis=0))
+                ground_truth.append(np.mean(y, axis=0))
         return np.array(heatmap_predictions).T, np.array(ground_truth).T
     
     def save(self, parameters_path, quiet):
