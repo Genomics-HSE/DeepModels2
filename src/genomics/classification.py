@@ -27,7 +27,7 @@ class Classifier(object):
         losses = np.ndarray(shape=(n_epochs, n_batches))
         
         for i in progress(range(n_epochs)):
-            hidden_state = self.classifier.get_init_state(dataset.batch_size)
+            hidden_state = self.classifier.get_init_state(dataset.batch_size).to(self.device)
             data_iterator = dataset.get_fixlen_iter(train=True)
             for j, (X_batch, y_batch) in enumerate(data_iterator):
                 X_batch = torch.from_numpy(X_batch).to(self.device)
@@ -61,7 +61,7 @@ class Classifier(object):
             heatmap_predictions = []
             ground_truth = []
             data_iterator = dataset.get_fixlen_iter(train=False)
-            hidden_state = self.classifier.get_init_state(1)
+            hidden_state = self.classifier.get_init_state(1).to(self.device)
             for X, y in tqdm(data_iterator):
                 X = torch.from_numpy(X).to(self.device)
                 y = torch.from_numpy(y).to(self.device)
