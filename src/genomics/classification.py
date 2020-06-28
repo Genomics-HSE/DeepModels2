@@ -11,32 +11,37 @@ class Classifier(object):
         self.classifier = classifier
         self.device = device
         self.logger = logger
-        self.loss = torch.nn.CrossEntropyLoss()
+        self.loss = torch.nn.KLDivLoss(reduction='batchmean')
         self.optimizer = torch.optim.Adam(
             params=self.classifier.parameters(),
             lr=lr
         )
     
-    def fit(self, dataloader, n_epochs=32, progress=None):
+    def fit(self, dataset, n_epochs=32, progress=None):
         if progress is None:
             def progress(x):
                 return x
         
-        n_batches = len(dataloader)
+        n_batches = len(dataset)
         
         losses = np.ndarray(shape=(n_epochs, n_batches))
         
         for i in progress(range(n_epochs)):
-            for j, (X_batch, y_batch) in enumerate(dataloader):
-                X_batch = X_batch.to(self.device)
-                y_batch = y_batch.to(self.device)
+            hidden_state = self.classifier.get_init_state(dataset.batch_size)
+            data_iterator = dataset.get_fixlen_iter(train=True)
+            for j, (X_batch, y_batch) in enumerate(data_iterator):
+                X_batch = torch.from_numpy(X_batch).to(self.device)
+                y_one_hot = one_hot_encoding(y_batch, self.classifier.n_output)
+                y_one_hot = torch.from_numpy(y_one_hot).to(self.device)
+                
                 self.optimizer.zero_grad()
-                logits = self.classifier(X_batch)
-                loss = self.loss(logits, y_batch)
+                logits, hidden_state = self.classifier(X_batch, hidden_state)
+                loss = self.loss(logits, y_one_hot)
                 loss.backward()
                 self.optimizer.step()
                 
                 losses[i, j] = loss.item()
+                hidden_state = hidden_state.detach()
             
             self.logger.log_metric("epoch_loss", losses[i].mean())
         return losses
@@ -51,24 +56,21 @@ class Classifier(object):
                 ground_truth.append(y_batch)
             return torch.cat(predictions, dim=0).cpu().numpy(), torch.cat(ground_truth, dim=0).cpu().numpy()
     
-    def predict_proba(self, datapath, step=50):
-        X = torch.load(os.path.join(datapath, "x", "0.pt"))
-        y = torch.load(os.path.join(datapath, "y", "0.pt"))
+    def predict_proba(self, dataset):
         with torch.no_grad():
             heatmap_predictions = []
-            heatmap_predictions_log = []
             ground_truth = []
-            for i in tqdm(range(0, len(X), step)):
-                X_i = X[i:i+step].unsqueeze(1)
-                preds = self.classifier(X_i).squeeze(-1)
-                
-                preds_soft = F.softmax(preds, dim=-1).numpy()
-                preds_log_soft = F.log_softmax(preds, dim=-1).numpy()
-                
-                heatmap_predictions.append(np.mean(preds_soft, axis=0))
-                heatmap_predictions_log.append(np.mean(preds_log_soft, axis=0))
-                ground_truth.append(np.mean(y[i:i+step].numpy(), axis=0))
-        return np.array(heatmap_predictions).T, np.array(heatmap_predictions_log).T, np.array(ground_truth).T
+            data_iterator = dataset.get_fixlen_iter(train=False)
+            hidden_state = self.classifier.get_init_state(1)
+            for X, y in tqdm(data_iterator):
+                X = torch.from_numpy(X).to(self.device)
+                y = torch.from_numpy(y).to(self.device)
+                preds, hidden_state = self.classifier(X, hidden_state)
+                preds = preds.squeeze(0)
+                preds = torch.exp(preds)
+                heatmap_predictions.append(np.mean(preds.numpy(), axis=0))
+                ground_truth.append(np.mean(y.numpy(), axis=0))
+        return np.array(heatmap_predictions).T, np.array(ground_truth).T
     
     def save(self, parameters_path, quiet):
         if os.environ.get("FAST_RUN") is None or not os.path.exists(parameters_path):
@@ -76,3 +78,12 @@ class Classifier(object):
             
             if not quiet:
                 print('  saving to {parameters_path}'.format(parameters_path=parameters_path))
+
+
+def one_hot_encoding(y_data, num_class):
+    """
+    
+    :param batch_data: (batch_size, seq_len)
+    :return:
+    """
+    return (np.arange(num_class) == y_data[..., None]).astype(np.float32)

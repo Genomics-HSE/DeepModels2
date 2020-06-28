@@ -56,6 +56,35 @@ gru-test:
 	  gru --input_size=$(input_size) --hidden_size=$(hidden_size) --num_layers=$(num_layers) \
 	  --batch_first=$(batch_first) --bidirectional=$(bidirectional) --dropout=$(dropout)
 
+gru-one-dir: gru-one-dir-train gru-one-dir-test
+
+$(call assign-vars, gru-one-dir-train gru-one-dir-train, input_size=1 \
+								hidden_size=64 \
+								num_layers=4 \
+								batch_first=true \
+								dropout=0.1 \
+								lr=0.001 \
+								)
+
+gru-one-dir-train:
+	@python scripts/main.py \
+  --device=$(DEVICE) --data=$(DATA) --output=$(OUTPUT) --logger=$(LOGGER) --offline=$(OFFLINE) \
+  --project $(PROJECT) --workspace $(WORKSPACE) --batch_size=$(BATCH_SIZE) \
+  --seq_len=$(SEQ_LEN) --n_output=$(N_CLASS) \
+  --action=train --seed=$(SEED) --epochs=$(N_EPOCHS) --lr=$(lr) \
+  gru_one_dir --input_size=$(input_size) --hidden_size=$(hidden_size) --num_layers=$(num_layers) \
+  --batch_first=$(batch_first) --dropout=$(dropout)
+
+
+gru-one-dir-test:
+	@python scripts/main.py \
+	  --device=$(DEVICE) --data=$(DATA) --output=$(OUTPUT) --logger=$(LOGGER) --offline=$(OFFLINE) \
+	  --project $(PROJECT) --workspace $(WORKSPACE) --batch_size=$(BATCH_SIZE) \
+	  --seq_len=$(SEQ_LEN) --n_output=$(N_CLASS) \
+	  --action=test \
+	  gru_one_dir --input_size=$(input_size) --hidden_size=$(hidden_size) --num_layers=$(num_layers) \
+	  --batch_first=$(batch_first) --dropout=$(dropout)
+
 $(call assign-vars, conv-train, n_token_in=2 \
 								hidden_size=32 \
 								emb_size=16 \

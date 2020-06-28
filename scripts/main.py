@@ -6,7 +6,7 @@ from torch.utils import data
 import numpy as np
 
 from genomics import Classifier
-from genomics_data import OneSequenceDataset, Dataset
+from genomics_data import OneSequenceDataset, DataIterator
 from genomics_utils import available, get_logger, ensure_directories
 
 from tqdm import tqdm
@@ -22,16 +22,10 @@ def train(dataset, model, device, seed, n_epochs, batch_size,
 	device = torch.device(device)
 	torch.manual_seed(seed)
 	
-	params = {'batch_size': batch_size,
-			  'num_workers': num_workers,
-			  'shuffle': False
-			  }
-	
-	train_loader = data.DataLoader(dataset.train_set, **params)
 	clf = Classifier(model, logger=logger, device=device)
 	if not quiet:
 		print("Running {}-model...".format(model.name))
-	losses = clf.fit(train_loader, n_epochs=n_epochs, progress=None if quiet else tqdm)
+	losses = clf.fit(dataset, n_epochs=n_epochs, progress=None if quiet else tqdm)
 	
 	clf.save(parameters_path, quiet)
 	
@@ -62,7 +56,7 @@ def test(dataset, model, device, batch_size,
 	# accuracy_test = np.mean(np.argmax(predictions_test, axis=1) == true_test)
 	
 	# todo
-	heatmap_preds = clf.predict_proba(dataset.data_path, step=50)
+	heatmap_preds = clf.predict_proba(dataset)
 	
 	# logger.log_metrics("d", model.name, accuracy_train=accuracy_train, accuracy_test=accuracy_test)
 	logger.log_coalescent_heatmap(model.name, heatmap_preds)
@@ -102,6 +96,13 @@ if __name__ == '__main__':
 	gru_parser.add_argument('--bidirectional', type=bool, default=True)
 	gru_parser.add_argument('--dropout', type=float, default=0.1)
 	
+	gru_one_dir_parser = model_parsers.add_parser('gru_one_dir')
+	gru_one_dir_parser.add_argument('--input_size', type=int, default=1)
+	gru_one_dir_parser.add_argument('--hidden_size', type=int, default=64)
+	gru_one_dir_parser.add_argument('--num_layers', type=int, default=2)
+	gru_one_dir_parser.add_argument('--batch_first', type=bool, default=True)
+	gru_one_dir_parser.add_argument('--dropout', type=float, default=0.1)
+	
 	conv_parser = model_parsers.add_parser('conv')
 	conv_parser.add_argument('--n_token_in', type=int, default=2)
 	conv_parser.add_argument('--emb_size', type=int, default=256)
@@ -114,15 +115,16 @@ if __name__ == '__main__':
 	print(args)
 	
 	model = available.models[args.model].Model(args).to(args.device)
-	
 	print(model.name)
 	
 	logger = get_logger(args.logger, args.output, project=args.project, workspace=args.workspace)
 	logger.set_name(model.name)
 	
-	assert (args.seq_len - args.tgt_len) % 2 == 0
-	dataset = OneSequenceDataset(args.data, args.tgt_len, int((args.seq_len - args.tgt_len) / 2))
-	
+	# assert (args.seq_len - args.tgt_len) % 2 == 0
+	# dataset = OneSequenceDataset(args.data, args.tgt_len, int((args.seq_len - args.tgt_len) / 2))
+	dataset = DataIterator(args.data, train_size=100,
+						   batch_size=args.batch_size,
+						   seq_len=args.seq_len)
 	if args.action == 'train':
 		train(
 			dataset=dataset, model=model,
