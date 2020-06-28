@@ -68,7 +68,7 @@ class Classifier(object):
                 preds = preds.squeeze(0)
                 preds = torch.exp(preds)
                 heatmap_predictions.append(np.mean(preds.cpu().numpy(), axis=0))
-                ground_truth.append(np.mean(y, axis=0))
+                ground_truth.append(np.mean(y.squeeze(0), axis=0))
         return np.array(heatmap_predictions).T, np.array(ground_truth).T
     
     def save(self, parameters_path, quiet):
