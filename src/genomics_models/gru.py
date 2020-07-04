@@ -45,7 +45,7 @@ class EncoderGRU(nn.Module):
         self.dense2 = nn.Linear(hidden_size, hidden_size // 2)
         self.dense3 = nn.Linear(hidden_size // 2, n_output)
     
-    def forward(self, input):
+    def forward(self, input, *args):
         """
         :param input: (batch_size, seq_len, input_size)
         :return:
@@ -59,10 +59,9 @@ class EncoderGRU(nn.Module):
         
         pred = F.relu(self.dense1(reduced_outputs))
         pred = F.relu(self.dense2(pred))
-        pred = self.dense3(pred)
+        pred = F.log_softmax(self.dense3(pred), dim=-1)
         
-        pred = pred.permute(0, 2, 1)
-        return pred
+        return pred,
     
     @property
     def name(self):

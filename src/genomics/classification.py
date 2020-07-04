@@ -35,7 +35,7 @@ class Classifier(object):
                 y_one_hot = torch.from_numpy(y_one_hot).to(self.device)
                 
                 self.optimizer.zero_grad()
-                logits, hidden_state = self.classifier(X_batch, hidden_state)
+                logits, *hidden_state = self.classifier(X_batch, *hidden_state)
                 loss = self.loss(logits, y_one_hot)
                 loss.backward()
                 self.optimizer.step()

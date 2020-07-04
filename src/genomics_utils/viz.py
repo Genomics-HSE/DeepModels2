@@ -28,7 +28,6 @@ def make_learning_curve(dataset_name, model_name, losses, dpi=100):
         alpha=0.25
     )
     
-    
     plt.title(dataset_name)
     plt.xlabel('epoch')
     plt.ylabel('cross-entropy')
@@ -37,7 +36,7 @@ def make_learning_curve(dataset_name, model_name, losses, dpi=100):
     return f
 
 
-def make_coalescent_heatmap(model_name, averaged_data_tuple, dpi=100):
+def make_coalescent_heatmap(model_name, averaged_data_tuple, dpi=300):
     # f = plt.figure(figsize=(20, 10), dpi=dpi)
     f, ax = plt.subplots(1, 1, dpi=dpi)
     im0 = ax.imshow(averaged_data_tuple[0], cmap='Wistia')
