@@ -39,6 +39,7 @@ class Classifier(object):
                 self.optimizer.step()
                 
                 losses[i, j] = loss.item()
+                print("Ep. {} Loss {}".format(i, loss.item()))
                 # hidden_state = hidden_state.detach()
             
             self.logger.log_metric("epoch_loss", losses[i].mean())
