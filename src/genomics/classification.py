@@ -41,7 +41,7 @@ class Classifier(object):
                 self.optimizer.step()
                 
                 losses[i, j] = loss.item()
-                hidden_state = hidden_state.detach()
+                # hidden_state = hidden_state.detach()
             
             self.logger.log_metric("epoch_loss", losses[i].mean())
         return losses
@@ -64,7 +64,7 @@ class Classifier(object):
             hidden_state = self.classifier.get_init_state(1).to(self.device)
             for X, y in tqdm(data_iterator):
                 X = torch.from_numpy(X).to(self.device)
-                preds, hidden_state = self.classifier(X, hidden_state)
+                preds, *hidden_state = self.classifier(X, *hidden_state)
                 preds = preds.squeeze(0)
                 preds = torch.exp(preds)
                 heatmap_predictions.append(np.mean(preds.cpu().numpy(), axis=0))

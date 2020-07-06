@@ -6,7 +6,7 @@ from torch.utils import data
 import numpy as np
 
 from genomics import Classifier
-from genomics_data import OneSequenceDataset, DataIterator
+from genomics_data import RandomDataIteratorOneSeq, SequentialDataIterator
 from genomics_utils import available, get_logger, ensure_directories
 
 from tqdm import tqdm
@@ -90,11 +90,13 @@ if __name__ == '__main__':
 	model_parsers = parser.add_subparsers(title='models', description='model to choose', dest='model')
 	gru_parser = model_parsers.add_parser('gru')
 	gru_parser.add_argument('--input_size', type=int, default=1)
+	gru_parser.add_argument('--out_channels', type=int, default=128)
+	gru_parser.add_argument('--kernel_size', type=int, default=1001)
 	gru_parser.add_argument('--hidden_size', type=int, default=64)
 	gru_parser.add_argument('--num_layers', type=int, default=2)
 	gru_parser.add_argument('--batch_first', type=bool, default=True)
 	gru_parser.add_argument('--bidirectional', type=bool, default=True)
-	gru_parser.add_argument('--dropout', type=float, default=0.1)
+	gru_parser.add_argument('--dropout', type=float, default=0.2)
 	
 	gru_one_dir_parser = model_parsers.add_parser('gru_one_dir')
 	gru_one_dir_parser.add_argument('--input_size', type=int, default=1)
@@ -122,9 +124,10 @@ if __name__ == '__main__':
 	
 	# assert (args.seq_len - args.tgt_len) % 2 == 0
 	# dataset = OneSequenceDataset(args.data, args.tgt_len, int((args.seq_len - args.tgt_len) / 2))
-	dataset = DataIterator(args.data, train_size=100,
+	dataset = RandomDataIteratorOneSeq(path=args.data, train_size=100,
 						   batch_size=args.batch_size,
-						   seq_len=args.seq_len)
+						   seq_len=args.seq_len,
+						   kernel_size=args.kernel_size)
 	if args.action == 'train':
 		train(
 			dataset=dataset, model=model,
