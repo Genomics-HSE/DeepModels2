@@ -27,9 +27,6 @@ class Dataset(metaclass=ABCMeta):
         self.y_data = None
         self.X_data_test = None
         self.y_data_test = None
-    
-    def __len__(self):
-        return self.X_data.shape[1] // self.seq_len
 
 
 class SequentialDataIterator(Dataset):
@@ -95,6 +92,10 @@ class RandomDataIteratorOneSeq(Dataset):
         
         return X_data[batch_beg_ix:batch_end_ix, :], \
                y_data[batch_beg_ix:batch_end_ix, :]
+
+    @property
+    def n_batches(self):
+        return 1 + self.X_data.shape[0] // self.batch_size
     
     def get_fixlen_iter(self, start=0, train=True):
         if train:
@@ -127,6 +128,7 @@ def batchify(padded_x_seq, y_seq, seq_len, kernel_size):
         y_batch.append(y_seq[i - one_side_padding:i - one_side_padding + seq_len])
     X_batch = np.vstack(X_batch)
     y_batch = np.vstack(y_batch)
+    print("Shape of X dataset {} and y ".format(X_batch.shape, y_batch.shape))
     return X_batch, y_batch
 
 

@@ -21,10 +21,8 @@ class Classifier(object):
         if progress is None:
             def progress(x):
                 return x
-        
-        n_batches = len(dataset)
-        
-        losses = np.ndarray(shape=(n_epochs, n_batches))
+                
+        losses = np.ndarray(shape=(n_epochs, dataset.n_batches))
         
         for i in progress(range(n_epochs)):
             hidden_state = self.classifier.get_init_state(dataset.batch_size).to(self.device)
@@ -65,10 +63,11 @@ class Classifier(object):
             for X, y in tqdm(data_iterator):
                 X = torch.from_numpy(X).to(self.device)
                 preds, *hidden_state = self.classifier(X, *hidden_state)
-                preds = preds.squeeze(0)
                 preds = torch.exp(preds)
+                preds = torch.flatten(preds, start_dim=0, end_dim=1)
+                y = y.flatten()
                 heatmap_predictions.append(np.mean(preds.cpu().numpy(), axis=0))
-                ground_truth.append(np.mean(y.squeeze(0), axis=0))
+                ground_truth.append(np.mean(y, axis=0))
         return np.array(heatmap_predictions).T, np.array(ground_truth).T
     
     def save(self, parameters_path, quiet):

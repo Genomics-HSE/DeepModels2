@@ -30,7 +30,7 @@ def make_learning_curve(dataset_name, model_name, losses, dpi=100):
     
     plt.title(dataset_name)
     plt.xlabel('epoch')
-    plt.ylabel('cross-entropy')
+    plt.ylabel('KL loss')
     plt.legend()
     
     return f
@@ -51,4 +51,5 @@ def make_coalescent_heatmap(model_name, averaged_data_tuple, dpi=300):
     ax.set_title("Softmax")
     plt.xlabel('site position')
     plt.ylabel('')
+    ax.yaxis.set_ticks(np.arange(0, 20, step=1))
     return f
