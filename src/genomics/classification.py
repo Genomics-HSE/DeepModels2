@@ -55,7 +55,7 @@ class Classifier(object):
                 ground_truth.append(y_batch)
             return torch.cat(predictions, dim=0).cpu().numpy(), torch.cat(ground_truth, dim=0).cpu().numpy()
     
-    def predict_proba(self, dataset):
+    def predict_proba(self, dataset, mean=False):
         with torch.no_grad():
             heatmap_predictions = []
             ground_truth = []
@@ -67,8 +67,14 @@ class Classifier(object):
                 preds = torch.exp(preds)
                 preds = torch.flatten(preds, start_dim=0, end_dim=1)
                 y = y.flatten()
-                heatmap_predictions.append(np.mean(preds.cpu().numpy(), axis=0))
-                ground_truth.append(np.mean(y, axis=0))
+                
+                if mean:
+                    heatmap_predictions.append(np.mean(preds.cpu().numpy(), axis=0))
+                    ground_truth.append(np.mean(y, axis=0))
+                else:
+                    heatmap_predictions.extend(preds.cpu().detach().numpy())
+                    ground_truth.extend(y)
+                
         return np.array(heatmap_predictions).T, np.array(ground_truth).T
     
     def save(self, parameters_path, quiet):

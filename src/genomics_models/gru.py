@@ -15,7 +15,7 @@ class Model:
                           bidirectional=args.bidirectional,
                           dropout=args.dropout,
                           n_output=args.n_output).to(args.device)
-
+    
     # @staticmethod
     # @property
     # def name(args):
@@ -38,7 +38,7 @@ class EncoderGRU(nn.Module):
         
         self.batch_norm = torch.nn.BatchNorm1d(num_features=out_channels)
         self.dropout0 = torch.nn.Dropout(dropout)
-
+        
         self.kernel_size = kernel_size
         self.inp_seq_len = seq_len
         self.hidden_size = hidden_size
@@ -78,7 +78,7 @@ class EncoderGRU(nn.Module):
         output = output.permute(0, 2, 1)
         # (batch_size, seq_len, out_channels)
         output, _ = self.gru(output)
-
+        
         output = self.dropout1(F.relu(self.dense1(output)))
         output = self.dropout2(F.relu(self.dense2(output)))
         output = F.log_softmax(self.dense3(output), dim=-1)
@@ -87,7 +87,7 @@ class EncoderGRU(nn.Module):
     
     @property
     def name(self):
-        return 'GRU-sl{}-tl{}-hs{}-nl{}'.format(self.inp_seq_len,
-                                                self.kernel_size,
-                                                self.hidden_size,
-                                                self.num_layers)
+        return 'GRU-sl{}-ker{}-hs{}-nl{}'.format(self.inp_seq_len,
+                                                 self.kernel_size,
+                                                 self.hidden_size,
+                                                 self.num_layers)

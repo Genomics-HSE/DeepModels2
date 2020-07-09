@@ -29,7 +29,7 @@ gru: gru-train gru-test
 $(call assign-vars, gru-train gru-test, input_size=1 \
 								out_channels=128 \
 								kernel_size=5 \
-								hidden_size=64 \
+								hidden_size=256 \
 								num_layers=4 \
 								batch_first=true \
 								bidirectional=true \
