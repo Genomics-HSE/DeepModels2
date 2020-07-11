@@ -69,7 +69,7 @@ class Classifier(object):
                 y = y.flatten()
                 
                 if mean:
-                    heatmap_predictions.append(np.mean(preds.cpu().numpy(), axis=0))
+                    heatmap_predictions.append(np.mean(preds.cpu().detach().numpy(), axis=0))
                     ground_truth.append(np.mean(y, axis=0))
                 else:
                     heatmap_predictions.extend(preds.cpu().detach().numpy())

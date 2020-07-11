@@ -79,7 +79,6 @@ if __name__ == '__main__':
 	parser.add_argument('--offline', type=bool, default=True, help='logger mode')
 	parser.add_argument('--quiet', type=bool, default=False)
 	parser.add_argument('--seq_len', type=int, default=1)
-	parser.add_argument('--tgt_len', type=int, default=1)
 	parser.add_argument('--n_output', type=int, default=20)
 	
 	parser.add_argument('--action', type=str, choices=['train', 'test'])
