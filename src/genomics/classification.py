@@ -62,6 +62,7 @@ class Classifier(object):
             data_iterator = dataset.get_fixlen_iter(train=False)
             hidden_state = self.classifier.get_init_state(1).to(self.device)
             for X, y in tqdm(data_iterator):
+                torch.cuda.empty_cache()
                 X = torch.from_numpy(X).to(self.device)
                 preds, *hidden_state = self.classifier(X, *hidden_state)
                 preds = torch.exp(preds)
