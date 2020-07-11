@@ -55,13 +55,14 @@ class Classifier(object):
                 ground_truth.append(y_batch)
             return torch.cat(predictions, dim=0).cpu().numpy(), torch.cat(ground_truth, dim=0).cpu().numpy()
     
-    def predict_proba(self, dataset, mean=False):
+    def predict_proba(self, dataset, logger, mean=False):
+        name = self.classifier.name
         with torch.no_grad():
             heatmap_predictions = []
             ground_truth = []
             data_iterator = dataset.get_fixlen_iter(train=False)
             hidden_state = self.classifier.get_init_state(1).to(self.device)
-            for X, y in tqdm(data_iterator):
+            for ix, (X, y) in tqdm(enumerate(data_iterator)):
                 torch.cuda.empty_cache()
                 X = torch.from_numpy(X).to(self.device)
                 preds, *hidden_state = self.classifier(X, *hidden_state)
@@ -73,10 +74,11 @@ class Classifier(object):
                     heatmap_predictions.append(np.mean(preds.cpu().detach().numpy(), axis=0))
                     ground_truth.append(np.mean(y, axis=0))
                 else:
-                    heatmap_predictions.extend(preds.cpu().detach().numpy())
-                    ground_truth.extend(y)
-                
-        return np.array(heatmap_predictions).T, np.array(ground_truth).T
+                    # heatmap_predictions.extend(preds.cpu().detach().numpy().T)
+                    # ground_truth.extend(y)
+                    plot_data = [preds.cpu().detach().numpy().T, y.T]
+                    logger.log_coalescent_heatmap(name, plot_data, ix)
+        return
     
     def save(self, parameters_path, quiet):
         if os.environ.get("FAST_RUN") is None or not os.path.exists(parameters_path):

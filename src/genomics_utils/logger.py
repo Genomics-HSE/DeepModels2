@@ -6,7 +6,7 @@ from comet_ml import Experiment, OfflineExperiment
 import matplotlib.pyplot as plt
 
 from genomics_utils import ensure_directories
-
+from .common import  ensure_directories
 __all__ = [
     'LocalLogger', 'CometLogger',
     'get_logger',
@@ -49,7 +49,6 @@ class LocalLogger(Logger):
     """
     
     def __init__(self, root):
-        from .common import ensure_directories
         self._report_root, self._figure_root = ensure_directories(root, 'reports/', 'figures/')
         
         super(LocalLogger, self).__init__()
@@ -81,20 +80,22 @@ class LocalLogger(Logger):
         f = self._log_learning_curve(dataset_name, model_name, losses)
         plt.close(f)
         
-    def _log_coalescent_heatmap(self, model_name, averaged_coals):
+    def _log_coalescent_heatmap(self, model_name, averaged_coals, ix):
         from .viz import make_coalescent_heatmap
+        ensure_directories(self._figure_root, model_name)
         
         f = make_coalescent_heatmap(model_name, averaged_coals)
+        
         plt.savefig(
             os.path.join(
-                self._figure_root,
-                'heatmap-{model}.png'.format(model=model_name)
+                self._figure_root, model_name,
+                '{ix}-heatmap-{model}.png'.format(ix=ix, model=model_name)
             )
         )
         return f
 
-    def log_coalescent_heatmap(self, model_name, averaged_coals):
-        f = self._log_coalescent_heatmap(model_name, averaged_coals)
+    def log_coalescent_heatmap(self, model_name, averaged_coals, ix):
+        f = self._log_coalescent_heatmap(model_name, averaged_coals, ix)
         plt.close(f)
 
 
