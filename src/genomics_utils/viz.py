@@ -39,7 +39,7 @@ def make_learning_curve(dataset_name, model_name, losses, dpi=100):
 def make_coalescent_heatmap(model_name, averaged_data_tuple, dpi=300):
     # f = plt.figure(, dpi=dpi)
     f, ax = plt.subplots(1, 1, dpi=dpi)  # figsize=(200, 10)
-    im0 = ax.imshow(averaged_data_tuple[0], cmap='Wistia')
+    im0 = ax.imshow(averaged_data_tuple[0], cmap='Wistia', aspect='auto')
     ax.plot(averaged_data_tuple[1], lw=1, c='black')
     # create an axes on the right side of ax. The width of cax will be 5%
     # of ax and the padding between cax and ax will be fixed at 0.05 inch.

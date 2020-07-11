@@ -74,11 +74,14 @@ class Classifier(object):
                     heatmap_predictions.append(np.mean(preds.cpu().detach().numpy(), axis=0))
                     ground_truth.append(np.mean(y, axis=0))
                 else:
-                    # heatmap_predictions.extend(preds.cpu().detach().numpy().T)
-                    # ground_truth.extend(y)
-                    plot_data = [preds.cpu().detach().numpy().T, y.T]
-                    logger.log_coalescent_heatmap(name, plot_data, ix)
-        return
+                    preds = preds.cpu().detach().numpy()
+                    
+                    heatmap_predictions.extend(preds)
+                    ground_truth.extend(y)
+                    
+                    logger.log_coalescent_heatmap(name, [preds.T, y.T], ix)
+        
+        return np.array(heatmap_predictions).T, np.array(ground_truth).T
     
     def save(self, parameters_path, quiet):
         if os.environ.get("FAST_RUN") is None or not os.path.exists(parameters_path):

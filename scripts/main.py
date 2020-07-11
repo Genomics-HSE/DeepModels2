@@ -56,11 +56,10 @@ def test(dataset, model, device, batch_size,
 	# accuracy_test = np.mean(np.argmax(predictions_test, axis=1) == true_test)
 	
 	# todo
-	# heatmap_preds = clf.predict_proba(dataset)
-	clf.predict_proba(dataset, logger)
+	heatmap_preds = clf.predict_proba(dataset, logger)
 	
 	# logger.log_metrics("d", model.name, accuracy_train=accuracy_train, accuracy_test=accuracy_test)
-	# logger.log_coalescent_heatmap(model.name, heatmap_preds)
+	logger.log_coalescent_heatmap(model.name, heatmap_preds, "00000")
 
 if __name__ == '__main__':
 	import argparse
