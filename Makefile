@@ -105,6 +105,17 @@ conv-train:
 	  conv --n_token_in=$(n_token_in) --hidden_size=$(hidden_size) --emb_size=$(emb_size) \
 	  --kernel_size=$(kernel_size) --n_layers=$(n_layers) --dropout=$(dropout)
 
+bert-train:
+	@python scripts/main.py \
+	  --device=$(DEVICE) --data=$(DATA) --output=$(OUTPUT) --logger=$(LOGGER) --offline=$(OFFLINE) \
+	  --project $(PROJECT) --workspace $(WORKSPACE) --batch_size=$(BATCH_SIZE) \
+	  --seq_len=$(SEQ_LEN) --n_output=$(N_CLASS) \
+	  --action=train --seed=$(SEED) --epochs=$(N_EPOCHS) --lr=$(lr) \
+	  bert --input_size=$(input_size)  \
+	  --hidden_size=$(hidden_size) --num_layers=$(num_layers) \
+	  --batch_first=$(batch_first) --bidirectional=$(bidirectional) --dropout=$(dropout)
+
+
 
 
 test_data:

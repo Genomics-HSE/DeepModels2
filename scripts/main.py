@@ -112,6 +112,20 @@ if __name__ == '__main__':
 	conv_parser.add_argument('--n_layers', type=int, default=10)
 	conv_parser.add_argument('--dropout', type=float, default=0.1)
 	
+	bert_parser = model_parsers.add_parser('bert')
+	bert_parser.add_argument("--n_token_in", type=int, default=2)
+	bert_parser.add_argument("--hidden_size", type=int, default=512)
+	bert_parser.add_argument("--num_hidden_layers", type=int, default=12)
+	bert_parser.add_argument("--num_attention_heads", type=int, default=12)
+	bert_parser.add_argument("--intermediate_size", type=int, default=1024)
+	bert_parser.add_argument("--hidden_dropout_prob", type=float, default=0.1)
+	bert_parser.add_argument("--attention_probs_dropout_prob", type=int, default=0.1)
+	bert_parser.add_argument("--type_vocab_size", type=int, default=2)
+	bert_parser.add_argument("--initializer_range", type=int, default=0.02)
+	bert_parser.add_argument("--layer_norm_eps", type=float, default=1e-12)
+	bert_parser.add_argument("--pad_token_id", type=int, default=0)
+	bert_parser.add_argument("--gradient_checkpointing", type=bool, default=False)
+	
 	args = parser.parse_args()
 	print(args)
 	
