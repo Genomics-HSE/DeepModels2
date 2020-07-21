@@ -63,7 +63,8 @@ def test(dataset, model, device, batch_size,
 
 if __name__ == '__main__':
 	import argparse
-	
+	from parser_args import gru_add_arguments, conv_bert_add_arguments, bert_add_arguments, conv_add_arguments, gru_one_dir_add_arguments
+
 	parser = argparse.ArgumentParser(prog='Genomics')
 	parser.add_argument(
 		'--data', type=str, default='data/micro_data/',
@@ -79,6 +80,7 @@ if __name__ == '__main__':
 	parser.add_argument('--offline', type=bool, default=True, help='logger mode')
 	parser.add_argument('--quiet', type=bool, default=False)
 	parser.add_argument('--seq_len', type=int, default=1)
+	parser.add_argument('--padding', type=int, default=0)
 	parser.add_argument('--n_output', type=int, default=20)
 	
 	parser.add_argument('--action', type=str, choices=['train', 'test'])
@@ -87,44 +89,17 @@ if __name__ == '__main__':
 	parser.add_argument('--lr', type=float, default=0.01)
 	
 	model_parsers = parser.add_subparsers(title='models', description='model to choose', dest='model')
+	
 	gru_parser = model_parsers.add_parser('gru')
-	gru_parser.add_argument('--input_size', type=int, default=1)
-	gru_parser.add_argument('--out_channels', type=int, default=128)
-	gru_parser.add_argument('--kernel_size', type=int, default=1001)
-	gru_parser.add_argument('--hidden_size', type=int, default=64)
-	gru_parser.add_argument('--num_layers', type=int, default=2)
-	gru_parser.add_argument('--batch_first', type=bool, default=True)
-	gru_parser.add_argument('--bidirectional', type=bool, default=True)
-	gru_parser.add_argument('--dropout', type=float, default=0.2)
-	
-	gru_one_dir_parser = model_parsers.add_parser('gru_one_dir')
-	gru_one_dir_parser.add_argument('--input_size', type=int, default=1)
-	gru_one_dir_parser.add_argument('--hidden_size', type=int, default=64)
-	gru_one_dir_parser.add_argument('--num_layers', type=int, default=2)
-	gru_one_dir_parser.add_argument('--batch_first', type=bool, default=True)
-	gru_one_dir_parser.add_argument('--dropout', type=float, default=0.1)
-	
 	conv_parser = model_parsers.add_parser('conv')
-	conv_parser.add_argument('--n_token_in', type=int, default=2)
-	conv_parser.add_argument('--emb_size', type=int, default=256)
-	conv_parser.add_argument('--hidden_size', type=int, default=512)
-	conv_parser.add_argument('--kernel_size', type=int, default=1024)
-	conv_parser.add_argument('--n_layers', type=int, default=10)
-	conv_parser.add_argument('--dropout', type=float, default=0.1)
-	
+	conv_gru_parser = model_parsers.add_parser('conv-gru')
 	bert_parser = model_parsers.add_parser('bert')
-	bert_parser.add_argument("--n_token_in", type=int, default=2)
-	bert_parser.add_argument("--hidden_size", type=int, default=512)
-	bert_parser.add_argument("--num_hidden_layers", type=int, default=12)
-	bert_parser.add_argument("--num_attention_heads", type=int, default=12)
-	bert_parser.add_argument("--intermediate_size", type=int, default=1024)
-	bert_parser.add_argument("--hidden_dropout_prob", type=float, default=0.1)
-	bert_parser.add_argument("--attention_probs_dropout_prob", type=int, default=0.1)
-	bert_parser.add_argument("--type_vocab_size", type=int, default=2)
-	bert_parser.add_argument("--initializer_range", type=int, default=0.02)
-	bert_parser.add_argument("--layer_norm_eps", type=float, default=1e-12)
-	bert_parser.add_argument("--pad_token_id", type=int, default=0)
-	bert_parser.add_argument("--gradient_checkpointing", type=bool, default=False)
+	conv_bert_parser = model_parsers.add_parser('conv-bert')
+	
+	gru_add_arguments(gru_parser)
+	conv_add_arguments(conv_parser)
+	bert_add_arguments(bert_parser)
+	conv_bert_add_arguments(conv_bert_parser)
 	
 	args = parser.parse_args()
 	print(args)
@@ -140,7 +115,7 @@ if __name__ == '__main__':
 	dataset = RandomDataIteratorOneSeq(path=args.data, train_size=100,
 						   batch_size=args.batch_size,
 						   seq_len=args.seq_len,
-						   kernel_size=args.kernel_size)
+					       one_side_padding=args.padding)
 	if args.action == 'train':
 		train(
 			dataset=dataset, model=model,
