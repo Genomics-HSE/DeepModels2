@@ -34,7 +34,6 @@ class Classifier(object):
                 
                 self.optimizer.zero_grad()
                 logits, *hidden_state = self.classifier(X_batch, *hidden_state)
-                print(logits.shape, y_one_hot.shape)
                 loss = self.loss(logits, y_one_hot)
                 loss.backward()
                 self.optimizer.step()

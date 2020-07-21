@@ -54,9 +54,7 @@ class EncoderBert(nn.Module):
         input = input.float()
         input = input.unsqueeze(2)
         # (batch_size, seq_len, 1)
-        print(input.shape)
         output, *h = self.bert_model(inputs_embeds=input)
-        print(output.shape)
         return output,
     
     @property

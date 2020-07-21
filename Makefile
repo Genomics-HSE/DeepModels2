@@ -10,7 +10,8 @@ LOGGER = local
 PROJECT = population-genomics
 WORKSPACE = kenenbek
 OFFLINE = true
-PAD=0
+
+padding=0
 
 N_CLASS=20
 ifdef FAST_RUN
@@ -41,7 +42,7 @@ $(call assign-vars, gru-train gru-test, input_size=1 \
 train = @python scripts/main.py \
         --device=$(DEVICE) --data=$(DATA) --output=$(OUTPUT) --logger=$(LOGGER) --offline=$(OFFLINE) \
         --project $(PROJECT) --workspace $(WORKSPACE) --batch_size=$(BATCH_SIZE) \
-        --seq_len=$(SEQ_LEN) --padding=$(PAD) --n_output=$(N_CLASS) \
+        --seq_len=$(SEQ_LEN) --padding=$(padding) --n_output=$(N_CLASS) \
         --action=train --seed=$(SEED) --epochs=$(N_EPOCHS) --lr=$(lr)
 
 
@@ -107,6 +108,8 @@ conv-train:
 	  conv --n_token_in=$(n_token_in) --hidden_size=$(hidden_size) --emb_size=$(emb_size) \
 	  --kernel_size=$(kernel_size) --n_layers=$(n_layers) --dropout=$(dropout)
 
+bert: bert-train bert-test
+
 $(call assign-vars, bert-train bert-test, input_size=1 \
 										n_token_in=2 \
 										hidden_size_bert=504 \
@@ -115,15 +118,13 @@ $(call assign-vars, bert-train bert-test, input_size=1 \
 										intermediate_size=1024 \
 										hidden_dropout_prob=0.1 \
 										attention_probs_dropout_prob=0.1 \
-										type_vocab_size=2 \
+										type_vocab_size=1 \
 										initializer_range=0.02 \
 										layer_norm_eps=1e-12 \
 										pad_token_id=0 \
 										gradient_checkpointing=False \
 										lr=0.001 \
 								)
-
-bert: bert-train bert-test
 
 bert-args = --input_size=$(input_size) --n_token_in=$(n_token_in) --hidden_size_bert=$(hidden_size_bert) \
             --num_layers_bert=$(num_layers_bert) --num_attention_heads=$(num_attention_heads) \
