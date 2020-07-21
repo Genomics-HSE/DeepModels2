@@ -74,16 +74,16 @@ class SequentialDataIterator(Dataset):
 
 
 class RandomDataIteratorOneSeq(Dataset):
-    def __init__(self, kernel_size, *args, **kwargs):
+    def __init__(self, one_side_padding, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
         train_file = self.data_file_names[0]
         test_file = self.data_file_names[1]
         
-        X_seq_padded_tr, y_seq_tr = self.load_with_padding_X_y(train_file, kernel_size)
-        X_seq_padded_test, y_seq_test = self.load_with_padding_X_y(test_file, kernel_size)
-        self.X_data, self.y_data = batchify(X_seq_padded_tr, y_seq_tr, self.seq_len, kernel_size)
-        self.X_data_test, self.y_data_test = batchify(X_seq_padded_test, y_seq_test, self.seq_len, kernel_size)
+        X_seq_padded_tr, y_seq_tr = self.load_with_padding_X_y(train_file, one_side_padding)
+        X_seq_padded_test, y_seq_test = self.load_with_padding_X_y(test_file, one_side_padding)
+        self.X_data, self.y_data = batchify(X_seq_padded_tr, y_seq_tr, self.seq_len, one_side_padding)
+        self.X_data_test, self.y_data_test = batchify(X_seq_padded_test, y_seq_test, self.seq_len, one_side_padding)
     
     def get_batch(self, X_data, y_data, batch_ix):
         batch_len = min(self.batch_size, X_data.shape[0] - batch_ix)
@@ -107,35 +107,33 @@ class RandomDataIteratorOneSeq(Dataset):
         for batch_ix in range(start, X_data.shape[0], self.batch_size):
             yield self.get_batch(X_data, y_data, batch_ix)
     
-    def load_with_padding_X_y(self, file_name, kernel_size, mmap=None):
+    def load_with_padding_X_y(self, file_name, one_side_padding, mmap=None):
         X_seq = np.pad(
             np.load(join(self.X_path, file_name), mmap_mode=mmap),
-            pad_width=((kernel_size - 1) // 2,),
+            pad_width=(one_side_padding,),
             mode='constant',
             constant_values=(-1,)
         )
         y_seq = np.load(join(self.y_path, file_name), mmap_mode=mmap)
-        
         return X_seq, y_seq
 
 
-def batchify(padded_x_seq, y_seq, seq_len, kernel_size):
+def batchify(padded_x_seq, y_seq, seq_len, one_side_padding):
     X_batch = []
     y_batch = []
-    one_side_padding = (kernel_size - 1) // 2
     for i in tqdm(range(one_side_padding, len(padded_x_seq) - seq_len - one_side_padding + 1, seq_len)):
         X_batch.append(padded_x_seq[i - one_side_padding:i + seq_len + one_side_padding])
         y_batch.append(y_seq[i - one_side_padding:i - one_side_padding + seq_len])
     X_batch = np.vstack(X_batch)
     y_batch = np.vstack(y_batch)
-    print("Shape of X dataset {} and y ".format(X_batch.shape, y_batch.shape))
+    print("Shape of datasets: X is {} and y {} ".format(X_batch.shape, y_batch.shape))
     return X_batch, y_batch
 
 
 if __name__ == '__main__':
     path = "../../data/m_data_numpy"
     dataset = RandomDataIteratorOneSeq(path=path, train_size=1, batch_size=3, seq_len=10,
-                                       kernel_size=5)
+                                       one_side_padding=5)
     data_iter = dataset.get_fixlen_iter()
     
     for i in data_iter:
