@@ -82,6 +82,7 @@ if __name__ == '__main__':
 	parser.add_argument('--seq_len', type=int, default=1)
 	parser.add_argument('--padding', type=int, default=0)
 	parser.add_argument('--input_size', type=int, default=1)
+	parser.add_argument('--n_token_in', type=int, default=2)
 	parser.add_argument('--n_output', type=int, default=20)
 	
 	parser.add_argument('--action', type=str, choices=['train', 'test'])

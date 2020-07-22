@@ -1,4 +1,4 @@
-SHELL := bash
+SHELL=/bin/bash
 assign-vars = $(foreach A,$2,$(eval $1: $A))
 .PHONY:	test hse-run test_data clean-output
 .PHONY:	gru gru-test gru-train
@@ -16,6 +16,7 @@ OFFLINE = true
 
 padding=0
 n_token_in=2
+input_size=1
 N_CLASS=20
 lr=0.001
 
@@ -32,10 +33,10 @@ else
 	NUM_WORKERS=8
 endif
 
-launcher = @python scripts/main.py \
+launcher = python scripts/main.py \
 		  --device=$(DEVICE) --data=$(DATA) --output=$(OUTPUT) --logger=$(LOGGER) --offline=$(OFFLINE) \
 		  --project $(PROJECT) --workspace $(WORKSPACE) --batch_size=$(BATCH_SIZE) \
-		  --seq_len=$(SEQ_LEN) --padding=$(PAD) --n_output=$(N_CLASS) --input_size=$(input_size) \
+		  --seq_len=$(SEQ_LEN) --padding=$(padding) --n_output=$(N_CLASS) --input_size=$(input_size) \
 		  --n_token_in=$(n_token_in)
 
 train = $(launcher) \
@@ -46,7 +47,7 @@ test = $(launcher) \
 		--action=test
 
 ########################
-#       RNN MODEL      #
+#    Recurrent MODEL   #
 ########################
 
 gru: gru-train gru-test
@@ -79,11 +80,11 @@ conv-vars = hidden_size_conv=256 \
 			kernel_size=51 \
 			n_layers_conv=12 \
 			dropout_conv=0.1 \
-			scale_conv = 1
+			scale_conv=1
 
 conv-args = --hidden_size_conv=$(hidden_size_conv) --emb_size_conv=$(emb_size_conv) \
-            --kernel_size=$(kernel_size) --n_layers=$(n_layers_conv) --dropout=$(dropout_conv) \
-            --scale_conv=$(scale_conv) --padding=$$(( (($kernel_size) - 1) / 2 ))
+            --kernel_size=$(kernel_size) --n_layers_conv=$(n_layers_conv) --dropout=$(dropout_conv) \
+            --scale_conv=$(scale_conv)
 
 $(call assign-vars, conv-train conv-test, $(conv-vars))
 
