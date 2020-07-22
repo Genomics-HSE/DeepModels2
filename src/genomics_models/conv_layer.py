@@ -3,12 +3,14 @@ import torch.nn.functional as F
 
 
 class ConvLayer(nn.Module):
-    def __init__(self, input_size, out_channels, kernel_size, stride, dropout):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, dropout):
         super().__init__()
-        self.conv1d = nn.Conv1d(in_channels=input_size,
+        self.conv1d = nn.Conv1d(in_channels=in_channels,
                                 out_channels=out_channels,
                                 kernel_size=kernel_size,
-                                stride=stride)
+                                stride=stride,
+                                padding=padding,
+                                )
         
         self.batch_norm = nn.BatchNorm1d(num_features=out_channels)
         self.dropout0 = nn.Dropout(dropout)
