@@ -2,6 +2,7 @@ SHELL := bash
 assign-vars = $(foreach A,$2,$(eval $1: $A))
 .PHONY:	test hse-run test_data clean-output
 .PHONY:	gru gru-test gru-train
+.PHONY: conv conv-train conv-train
 .PHONY:	bert bert-train bert-test
 
 DATA = data/micro_data
@@ -73,16 +74,18 @@ gru-test:
 
 conv: conv-train conv-test
 
-conv-vars = hidden_size_conv=32 \
-			emb_size_conv=16 \
-			kernel_size=4097 \
-			n_layers_conv=6 \
-			dropout_conv=0.1
+conv-vars = hidden_size_conv=256 \
+			emb_size_conv=256 \
+			kernel_size=51 \
+			n_layers_conv=12 \
+			dropout_conv=0.1 \
+			scale_conv = 1
 
 conv-args = --hidden_size_conv=$(hidden_size_conv) --emb_size_conv=$(emb_size_conv) \
-            	  --kernel_size=$(kernel_size) --n_layers=$(n_layers_conv) --dropout=$(dropout_conv)
+            --kernel_size=$(kernel_size) --n_layers=$(n_layers_conv) --dropout=$(dropout_conv) \
+            --scale_conv=$(scale_conv) --padding=$$(( (($kernel_size) - 1) / 2 ))
 
-$(call assign-vars, conv-train, $(conv-vars))
+$(call assign-vars, conv-train conv-test, $(conv-vars))
 
 conv-train:
 	$(train) conv $(conv-args)
