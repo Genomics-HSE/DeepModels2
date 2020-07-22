@@ -56,7 +56,7 @@ class EncoderBert(nn.Module):
         input = input.unsqueeze(2)
         # (batch_size, seq_len, 1)
         output, *h = self.bert_model(inputs_embeds=input)
-        output = F.log_softmax(output)
+        output = F.log_softmax(output, dim=-1)
         return output,
     
     @property
