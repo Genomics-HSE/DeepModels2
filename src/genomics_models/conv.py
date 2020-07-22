@@ -25,12 +25,14 @@ class EncoderConv(nn.Module):
         
         assert kernel_size % 2 == 1, "Kernel size must be odd!"
         _ = emb_size
-        self.device = device
+        
         self.seq_len = seq_len
+        self.n_output = n_output
         self.hidden_size = hidden_size
         self.kernel_size = kernel_size
         self.n_layers = n_layers
         self.scale = scale
+        self.device = device
         
         self.scale = torch.sqrt(torch.FloatTensor([self.scale])).to(device)
         
@@ -76,7 +78,8 @@ class EncoderConv(nn.Module):
             input = conv(input)
         
         # input = (batch_size, out_channels, seq_len)
-        
+        input = input.permute(0, 2, 1)
+        # input = (batch_size, seq_len, out_channels)
         pred = F.relu(self.dropout(self.dense1(input)))
         pred = F.relu(self.dropout(self.dense2(pred)))
         output = F.log_softmax(self.dense3(pred), dim=-1)
