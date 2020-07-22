@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from transformers import BertConfig, BertForTokenClassification
 
 
@@ -55,6 +56,7 @@ class EncoderBert(nn.Module):
         input = input.unsqueeze(2)
         # (batch_size, seq_len, 1)
         output, *h = self.bert_model(inputs_embeds=input)
+        output = F.log_softmax(output)
         return output,
     
     @property
