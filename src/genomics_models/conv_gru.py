@@ -4,7 +4,7 @@ import torch.nn as nn
 from .gru import EncoderGRU
 from .conv_layer import ConvLayer
 
-
+## TODO
 class Model:
     def __new__(cls, args):
         return EncoderConvGRU(
@@ -20,11 +20,17 @@ class Model:
 
 class EncoderConvGRU(nn.Module):
     def __init__(self):
-      
-      self.embedding = ConvLayer(in_channels=1,
-                                 out_channels=hidden_size,
-                                 kernel_size=kernel_size,
-                                 stride=1,
-                                 padding=0,
-                                 dropout=dropout
-                                 )
+        super().__init__()
+        self.embedding = ConvLayer(in_channels=1,
+                                   out_channels=hidden_size,
+                                   kernel_size=kernel_size,
+                                   stride=1,
+                                   padding=0,
+                                   dropout=dropout
+                                   )
+    
+    def forward(self):
+    
+    
+    
+    

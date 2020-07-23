@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .conv_layer import ConvLayer
+
 
 class Model:
     def __new__(cls, args):
@@ -28,7 +30,7 @@ class Model:
 class EncoderGRU(nn.Module):
     def __init__(self, seq_len, input_size, out_channels, kernel_size,
                  hidden_size, num_layers, batch_first, bidirectional,
-                 dropout, n_output):
+                 dropout, n_output, conv_n_layers):
         super().__init__()
         # conv
         self.conv1d = torch.nn.Conv1d(in_channels=input_size,
@@ -44,6 +46,15 @@ class EncoderGRU(nn.Module):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.n_output = n_output
+        
+        self.conv_n_layers = conv_n_layers
+        self.convs = nn.ModuleList([ConvLayer(in_channels=hidden_size,
+                                              out_channels=hidden_size,
+                                              kernel_size=kernel_size,
+                                              stride=1,
+                                              padding=(kernel_size - 1) // 2,
+                                              dropout=dropout)
+                                    for _ in range(conv_n_layers)])
         
         self.gru = nn.GRU(input_size=out_channels,
                           hidden_size=hidden_size,
@@ -75,6 +86,10 @@ class EncoderGRU(nn.Module):
         output = F.relu(output)
         output = self.dropout0(output)
         
+        # convolutional block
+        for conv in self.convs:
+            output = conv(output)
+        
         output = output.permute(0, 2, 1)
         # (batch_size, seq_len, out_channels)
         output, _ = self.gru(output)
@@ -87,7 +102,9 @@ class EncoderGRU(nn.Module):
     
     @property
     def name(self):
-        return 'GRU-sl{}-ker{}-hs{}-nl{}'.format(self.inp_seq_len,
-                                                 self.kernel_size,
-                                                 self.hidden_size,
-                                                 self.num_layers)
+        return 'CONV{}-GRU-sl{}-ker{}-hs{}-nl{}'.format(self.conv_n_layers,
+                                                        self.inp_seq_len,
+                                                        self.kernel_size,
+                                                        self.hidden_size,
+                                                        self.num_layers
+                                                        )
