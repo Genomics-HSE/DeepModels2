@@ -53,15 +53,18 @@ test = $(launcher) \
 gru: gru-train gru-test
 
 gru-vars = hidden_size=256 \
-		num_layers=4 \
+		num_layers=2 \
 		batch_first=true \
 		bidirectional=true \
-		dropout=0.1
+		dropout=0.1 \
+		conv_n_layers=4 \
+		kernel_size=5
 
 $(call assign-vars, gru-train gru-test, $(gru-vars))
 
 gru-args = --hidden_size=$(hidden_size) --num_layers=$(num_layers) \
-           --batch_first=$(batch_first) --bidirectional=$(bidirectional) --dropout=$(dropout)
+           --batch_first=$(batch_first) --bidirectional=$(bidirectional) --dropout=$(dropout) \
+           --conv_n_layers=$(conv_n_layers) --kernel_size=$(kernel_size)
 
 gru-train:
 	$(train) gru $(gru-args)

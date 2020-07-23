@@ -7,7 +7,8 @@ def gru_add_arguments(parser):
     parser.add_argument('--batch_first', type=bool, default=True)
     parser.add_argument('--bidirectional', type=bool, default=True)
     parser.add_argument('--dropout', type=float, default=0.2)
-
+    parser.add_argument('--conv_n_layers', type=int)
+    
 
 def conv_add_arguments(parser):
     parser.add_argument('--hidden_size_conv', type=int)

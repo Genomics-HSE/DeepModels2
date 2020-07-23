@@ -16,7 +16,8 @@ class Model:
                           batch_first=args.batch_first,
                           bidirectional=args.bidirectional,
                           dropout=args.dropout,
-                          n_output=args.n_output).to(args.device)
+                          n_output=args.n_output,
+                          conv_n_layers=args.conv_n_layers).to(args.device)
     
     # @staticmethod
     # @property
@@ -34,11 +35,11 @@ class EncoderGRU(nn.Module):
         super().__init__()
         # conv
         self.conv1d = torch.nn.Conv1d(in_channels=input_size,
-                                      out_channels=out_channels,
+                                      out_channels=hidden_size,
                                       kernel_size=kernel_size,
                                       stride=1)
         
-        self.batch_norm = torch.nn.BatchNorm1d(num_features=out_channels)
+        self.batch_norm = torch.nn.BatchNorm1d(num_features=hidden_size)
         self.dropout0 = torch.nn.Dropout(dropout)
         
         self.kernel_size = kernel_size
@@ -56,7 +57,7 @@ class EncoderGRU(nn.Module):
                                               dropout=dropout)
                                     for _ in range(conv_n_layers)])
         
-        self.gru = nn.GRU(input_size=out_channels,
+        self.gru = nn.GRU(input_size=hidden_size,
                           hidden_size=hidden_size,
                           num_layers=num_layers,
                           batch_first=batch_first,
