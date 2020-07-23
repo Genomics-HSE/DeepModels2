@@ -88,6 +88,6 @@ class EncoderConv(nn.Module):
     @property
     def name(self):
         return 'CONV-sl{}-hs{}-kl{}-nl{}'.format(self.seq_len,
-                                                      self.hidden_size,
-                                                      self.kernel_size,
-                                                      self.n_layers)
+                                                 self.hidden_size,
+                                                 self.kernel_size,
+                                                 self.n_layers)
