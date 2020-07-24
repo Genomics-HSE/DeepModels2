@@ -32,6 +32,7 @@ def bert_add_arguments(parser):
     parser.add_argument("--layer_norm_eps", type=float)
     parser.add_argument("--pad_token_id", type=int)
     parser.add_argument("--gradient_checkpointing", type=bool)
+    parser.add_argument("--kernel_size_b", type=int)
 
 
 def conv_bert_add_arguments(parser):
