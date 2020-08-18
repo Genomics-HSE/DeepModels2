@@ -19,23 +19,24 @@ class Model:
                                bidirectional=args.bidirectional,
                                dropout=args.dropout,
                                n_output=args.n_output,
-                               conv_n_layers=args.conv_n_layers)
+                               conv_n_layers=args.conv_n_layers,
+                               lr=0.2)
         # .to(args.device)
 
 
 class LightEncoderGRU(pl.LightningModule):
     def __init__(self, seq_len, input_size, out_channels, kernel_size,
                  hidden_size, num_layers, batch_first, bidirectional,
-                 dropout, n_output, conv_n_layers):
+                 dropout, n_output, conv_n_layersm, lr):
         super(LightEncoderGRU, self).__init__()
         ###
+        self.lr = lr
 
         self.kernel_size = kernel_size
         self.inp_seq_len = seq_len
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.n_output = n_output
-
         self.conv_n_layers = conv_n_layers
 
         self.model = nn.Sequential(
@@ -83,6 +84,18 @@ class LightEncoderGRU(pl.LightningModule):
         output = F.log_softmax(self.model(input), dim=-1)
 
         return output,
+
+    def training_step(self, batch, batch_nb):
+        x, y = batch
+        loss = F.kl_div(self(x), y)  # KLDivLoss
+        tensorboard_logs = {'train_loss': loss}
+        return {'loss': loss, 'log': tensorboard_logs}
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(
+            params=self.classifier.parameters(),
+            lr=self.lr
+        )
 
     @property
     def name(self):
