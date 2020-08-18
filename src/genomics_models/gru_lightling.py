@@ -27,7 +27,7 @@ class Model:
 class LightEncoderGRU(pl.LightningModule):
     def __init__(self, seq_len, input_size, out_channels, kernel_size,
                  hidden_size, num_layers, batch_first, bidirectional,
-                 dropout, n_output, conv_n_layersm, lr):
+                 dropout, n_output, conv_n_layers, lr):
         super(LightEncoderGRU, self).__init__()
         ###
         self.lr = lr
