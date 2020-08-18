@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pytorch_lightning as pl
 
 from .conv_layer import ConvLayer
 
@@ -18,7 +19,7 @@ class Model:
                            device=args.device).to(args.device)
 
 
-class EncoderConv(nn.Module):
+class EncoderConv(pl.LightningModule):
     def __init__(self, seq_len, n_output, emb_size, hidden_size, n_layers,
                  kernel_size, dropout, scale, device):
         super().__init__()

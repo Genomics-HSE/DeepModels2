@@ -1,8 +1,9 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import pytorch_lightning as pl
 
 
-class ConvLayer(nn.Module):
+class ConvLayer(pl.LightningModule):
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, dropout):
         super().__init__()
         self.conv1d = nn.Conv1d(in_channels=in_channels,

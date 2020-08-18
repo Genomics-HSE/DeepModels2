@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pytorch_lightning as pl
 
 
 class Model:
@@ -14,7 +15,7 @@ class Model:
                                         n_output=args.n_output).to(args.device)
 
 
-class EncoderGRUOneDirectional(nn.Module):
+class EncoderGRUOneDirectional(pl.LightningModule):
     def __init__(self, seq_len, input_size, hidden_size, num_layers,
                  batch_first, dropout, n_output):
         super().__init__()

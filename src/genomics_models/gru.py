@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pytorch_lightning as pl
 
 from .conv_layer import ConvLayer
 
@@ -28,7 +29,7 @@ class Model:
     #                                             args.num_layers)
 
 
-class EncoderGRU(nn.Module):
+class EncoderGRU(pl.LightningModule):
     def __init__(self, seq_len, input_size, out_channels, kernel_size,
                  hidden_size, num_layers, batch_first, bidirectional,
                  dropout, n_output, conv_n_layers):

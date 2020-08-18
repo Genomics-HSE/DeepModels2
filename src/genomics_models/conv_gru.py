@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import pytorch_lightning as pl
 
 from .gru import EncoderGRU
 from .conv_layer import ConvLayer
@@ -18,7 +19,7 @@ class Model:
         ).to(args.device)
 
 
-class EncoderConvGRU(nn.Module):
+class EncoderConvGRU(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.embedding = ConvLayer(in_channels=1,

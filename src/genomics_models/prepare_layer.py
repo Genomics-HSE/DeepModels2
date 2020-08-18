@@ -1,7 +1,8 @@
 import torch.nn as nn
+import pytorch_lightning as pl
 
 
-class PrepareFloat(nn.Module):
+class PrepareFloat(pl.LightningModule):
     def __init__(self):
         super().__init__()
     

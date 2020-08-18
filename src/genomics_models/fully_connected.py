@@ -1,8 +1,9 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import pytorch_lightning as pl
 
 
-class FullConnected(nn.Module):
+class FullConnected(pl.LightningModule):
     def __init__(self, hidden_size, n_output, dropout):
         super().__init__()
         self.dense1 = nn.Linear(hidden_size, hidden_size // 2)

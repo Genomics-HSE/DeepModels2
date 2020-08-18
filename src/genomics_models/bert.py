@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import BertConfig, BertForTokenClassification
+import pytorch_lightning as pl
 
 from .conv_layer import ConvLayer
 
@@ -20,7 +21,7 @@ class Model:
         ).to(args.device)
 
 
-class EncoderBert(nn.Module):
+class EncoderBert(pl.LightningModule):
     def __init__(self, seq_len=10000,
                  vocab_size=2, hidden_size=196, num_hidden_layers=12,
                  num_attention_heads=12, intermediate_size=1024, hidden_act='relu',
