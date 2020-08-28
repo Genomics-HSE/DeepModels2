@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 
 from .conv_layer import ConvLayer
-
+from .training_process import Learning
 from genomics_utils import one_hot_encoding
 
 
@@ -23,7 +23,7 @@ class Model:
                           conv_n_layers=args.conv_n_layers).to(args.device)
 
 
-class EncoderGRU(pl.LightningModule):
+class EncoderGRU(pl.LightningModule, Learning):
     def __init__(self, seq_len, input_size, out_channels, kernel_size,
                  hidden_size, num_layers, batch_first, bidirectional,
                  dropout, n_output, conv_n_layers):

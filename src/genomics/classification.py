@@ -87,7 +87,7 @@ class Classifier(object):
             torch.save(self.classifier.state_dict(), parameters_path)
             
             if not quiet:
-                print('  saving to {parameters_path}'.format(parameters_path=parameters_path))
+                print('saving to {parameters_path}'.format(parameters_path=parameters_path))
 
 
 def one_hot_encoding(y_data, num_class):
