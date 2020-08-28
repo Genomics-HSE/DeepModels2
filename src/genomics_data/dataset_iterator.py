@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 
-class Dataset(metaclass=ABCMeta):
+class CustomDataset(metaclass=ABCMeta):
     def __init__(self, path, train_size, batch_size,
                  seq_len):
         self.path = path
@@ -29,7 +29,7 @@ class Dataset(metaclass=ABCMeta):
         self.y_data_test = None
 
 
-class SequentialDataIterator(Dataset):
+class SequentialDataIterator(CustomDataset):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         batch_filenames = self.data_file_names[:self.train_size]
@@ -73,7 +73,7 @@ class SequentialDataIterator(Dataset):
                 yield self.get_batch(X_data, y_data, batch_ix, seq_ix)
 
 
-class RandomDataIteratorOneSeq(Dataset):
+class RandomDataIteratorOneSeq(CustomDataset):
     def __init__(self, one_side_padding, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
@@ -92,7 +92,7 @@ class RandomDataIteratorOneSeq(Dataset):
         
         return X_data[batch_beg_ix:batch_end_ix, :], \
                y_data[batch_beg_ix:batch_end_ix, :]
-
+    
     @property
     def n_batches(self):
         return 1 + self.X_data.shape[0] // self.batch_size
@@ -106,16 +106,6 @@ class RandomDataIteratorOneSeq(Dataset):
             y_data = self.y_data_test
         for batch_ix in range(start, X_data.shape[0], self.batch_size):
             yield self.get_batch(X_data, y_data, batch_ix)
-    
-    def load_with_padding_X_y(self, file_name, one_side_padding, mmap=None):
-        X_seq = np.pad(
-            np.load(join(self.X_path, file_name), mmap_mode=mmap),
-            pad_width=(one_side_padding,),
-            mode='constant',
-            constant_values=(-1,)
-        )
-        y_seq = np.load(join(self.y_path, file_name), mmap_mode=mmap)
-        return X_seq, y_seq
 
 
 def batchify(padded_x_seq, y_seq, seq_len, one_side_padding):
@@ -130,11 +120,21 @@ def batchify(padded_x_seq, y_seq, seq_len, one_side_padding):
     return X_batch, y_batch
 
 
+def load_with_padding_X_y(X_file_path, y_file_path, one_side_padding, mmap=None):
+    X_seq = np.pad(
+        np.load(X_file_path, mmap_mode=mmap),
+        pad_width=(one_side_padding,),
+        mode='constant',
+        constant_values=(-1,)
+    )
+    y_seq = np.load(y_file_path, mmap_mode=mmap)
+    return X_seq, y_seq
+
+
 if __name__ == '__main__':
     path = "../../data/m_data_numpy"
     dataset = RandomDataIteratorOneSeq(path=path, train_size=1, batch_size=3, seq_len=10,
                                        one_side_padding=5)
     data_iter = dataset.get_fixlen_iter()
-    
     for i in data_iter:
         print(i[0].shape)
