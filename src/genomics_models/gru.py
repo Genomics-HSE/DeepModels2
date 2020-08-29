@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 
 from .conv_layer import ConvLayer
-from .training_process import Learning
+from .training_process import LightningModuleExtended
 from genomics_utils import one_hot_encoding
 
 
@@ -23,7 +23,7 @@ class Model:
                           conv_n_layers=args.conv_n_layers).to(args.device)
 
 
-class EncoderGRU(pl.LightningModule, Learning):
+class EncoderGRU(LightningModuleExtended):
     def __init__(self, seq_len, input_size, out_channels, kernel_size,
                  hidden_size, num_layers, batch_first, bidirectional,
                  dropout, n_output, conv_n_layers):
@@ -64,9 +64,8 @@ class EncoderGRU(pl.LightningModule, Learning):
         self.dense2 = nn.Linear(hidden_size, hidden_size // 2)
         self.dropout2 = nn.Dropout(dropout)
         self.dense3 = nn.Linear(hidden_size // 2, n_output)
-    
-    def get_init_state(self, batch_size):
-        return torch.Tensor([])
+        
+        self.lr = 0.007
     
     def forward(self, input):
         """
@@ -96,18 +95,6 @@ class EncoderGRU(pl.LightningModule, Learning):
         
         return output
     
-    def training_step(self, batch):
-        X_batch, y_batch = batch
-        X_batch = torch.from_numpy(X_batch)
-        y_one_hot = one_hot_encoding(y_batch, self.n_output)
-        y_one_hot = torch.from_numpy(y_one_hot)
-        
-        logits = self.forward(X_batch)
-        loss = self.loss(logits, y_one_hot)
-        return loss
-
-
-
     @property
     def name(self):
         return 'CONV{}-GRU-sl{}-ker{}-hs{}-nl{}'.format(self.conv_n_layers,

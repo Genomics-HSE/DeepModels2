@@ -9,7 +9,7 @@ import numpy as np
 
 from genomics import Classifier
 from genomics_data import RandomDataIteratorOneSeq, SequentialDataIterator, DatasetPL
-from genomics_utils import available, get_logger, ensure_directories, boolean_string
+from genomics_utils import available, get_logger, ensure_directories
 
 from tqdm import tqdm
 
@@ -33,7 +33,7 @@ def lightning_train(trainer: pl.Trainer,
     trainer.fit(model, data_module)
 
     model.save(parameters_path, quiet)
-    # logger.log_losses("dataset", model.name, losses)
+    logger.log_losses("dataset", model.name, losses)
     
 
 
@@ -73,8 +73,8 @@ if __name__ == '__main__':
     parser.add_argument('--logger', type=str, choices=['local', 'comet'], default='local')
     parser.add_argument('--project', type=str, default=None, help='project name for comet logger, None by default')
     parser.add_argument('--workspace', type=str, default=None, help='workspace for comet logger, None by default')
-    parser.add_argument('--offline', type=boolean_string, default=True, help='logger mode')
-    parser.add_argument('--quiet', type=boolean_string, default=False)
+    parser.add_argument('--offline', type=bool, default=True, help='logger mode')
+    parser.add_argument('--quiet', type=bool, default=False)
     parser.add_argument('--seq_len', type=int, default=1)
     parser.add_argument('--padding', type=int, default=0)
     parser.add_argument('--input_size', type=int, default=1)
@@ -90,10 +90,10 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--epochs', type=int, default=16)
     parser.add_argument('--lr', type=float, default=0.01)
-    parser.add_argument('--auto_lr_find', type=boolean_string, default=True)
+    parser.add_argument('--auto_lr_find', type=bool, default=True)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--num_workers', type=int, default=1)
-    parser.add_argument('--shuffle', type=boolean_string, default=False)
+    parser.add_argument('--shuffle', type=bool, default=False)
     
     model_parsers = parser.add_subparsers(title='models', description='model to choose', dest='model')
     
@@ -113,6 +113,7 @@ if __name__ == '__main__':
     
     model = available.models[args.model].Model(args).to(args.device)
     print(model.name)
+    
     logger = get_logger(args.logger, args.output, project=args.project, workspace=args.workspace)
     logger.set_name(model.name)
     
@@ -139,23 +140,20 @@ if __name__ == '__main__':
                             num_workers=args.num_workers)
     
     if args.action == 'train':
-        lightning_train(trainer=trainer,
-                        model=model,
-                        data_module=data_module,
-                        output_path=args.output)
-        # train(
-        #     dataset=dataset, model=model,
-        #     device=args.device, seed=args.seed,
-        #     n_epochs=args.epochs, batch_size=args.batch_size,
-        #     output_path=args.output, logger=logger,
-        #     num_workers=args.num_workers, quiet=args.quiet
-        # )
-        # test(
-        #     dataset=dataset, model=model,
-        #     device=args.device, batch_size=args.batch_size,
-        #     output_path=args.output, logger=logger, project=args.project,
-        #     workspace=args.workspace
-        # )
+        lightning_train(trainer=trainer, model=model, data_module=data_module)
+        train(
+            dataset=dataset, model=model,
+            device=args.device, seed=args.seed,
+            n_epochs=args.epochs, batch_size=args.batch_size,
+            output_path=args.output, logger=logger,
+            num_workers=args.num_workers, quiet=args.quiet
+        )
+        test(
+            dataset=dataset, model=model,
+            device=args.device, batch_size=args.batch_size,
+            output_path=args.output, logger=logger, project=args.project,
+            workspace=args.workspace
+        )
     elif args.action == 'test':
         test(
             dataset=dataset, model=model,

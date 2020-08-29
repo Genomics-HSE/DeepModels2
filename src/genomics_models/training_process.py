@@ -9,13 +9,15 @@ import tqdm
 from genomics_utils import one_hot_encoding
 
 
-class Learning(metaclass=abc.ABCMeta):
-    def training_step(self, batch):
-        X_batch, y_batch = batch
-        X_batch = torch.from_numpy(X_batch)
-        y_one_hot = one_hot_encoding(y_batch, self.n_output)
-        y_one_hot = torch.from_numpy(y_one_hot)
+class LightningModuleExtended(pl.LightningModule):
+    def __init__(self):
+        super().__init__()
+        self.loss = torch.nn.KLDivLoss(reduction='batchmean')
+        self.example_input_array = torch.LongTensor(1, 10).random_(0, 2)
 
+    def training_step(self, batch, batch_ix):
+        X_batch, y_batch = batch
+        y_one_hot = one_hot_encoding(y_batch, self.n_output)
         logits = self.forward(X_batch)
         loss = self.loss(logits, y_one_hot)
         return loss

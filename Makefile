@@ -12,19 +12,21 @@ BATCH_SIZE = 8
 LOGGER = local
 PROJECT = population-genomics
 WORKSPACE = kenenbek
-OFFLINE = true
+OFFLINE = True
 
 padding=0
 n_token_in=2
 input_size=1
 N_CLASS=20
 lr=0.001
-auto_lr_find=true
+auto_lr_find=False
+shuffle=False
 
 tr_file_first=0
 tr_file_last=0
 te_file_first=1
 te_file_last=1
+
 
 ifdef FAST_RUN
 	SEQ_LEN=10
@@ -40,11 +42,13 @@ endif
 
 launcher = python scripts/main.py \
 		  --device=$(DEVICE) --data=$(DATA) --output=$(OUTPUT) --logger=$(LOGGER) --offline=$(OFFLINE) \
-		  --project $(PROJECT) --workspace $(WORKSPACE) --batch_size=$(BATCH_SIZE) \
+		  --project $(PROJECT) --workspace $(WORKSPACE) \
 		  --seq_len=$(SEQ_LEN) --padding=$(padding) --n_output=$(N_CLASS) --input_size=$(input_size) \
 		  --n_token_in=$(n_token_in) \
 		  --tr_file_first=$(tr_file_first) --tr_file_last=$(tr_file_last) --te_file_first=$(te_file_first) \
-		  --te_file_last=$(te_file_last)
+		  --te_file_last=$(te_file_last) \
+		  --batch_size=$(BATCH_SIZE) --shuffle=$(shuffle) --num_workers=$(NUM_WORKERS)
+
 
 train = $(launcher) \
         --action=train --seed=$(SEED) --epochs=$(N_EPOCHS) --lr=$(lr) --auto_lr_find=$(auto_lr_find)

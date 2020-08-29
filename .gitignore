@@ -7,6 +7,10 @@ tmp_script.sh
 .DS_Store
 src/.DS_Store
 
+# Pytorch Lightning output
+*.ckpt
+lightning_logs/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
