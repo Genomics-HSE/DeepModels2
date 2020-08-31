@@ -10,15 +10,16 @@ OUTPUT = output/
 SEED = 42
 BATCH_SIZE = 8
 LOGGER = local
-PROJECT = population-genomics
+PROJECT = population-genomics-new
 WORKSPACE = kenenbek
 OFFLINE = True
+RESUME = False
 
 padding=0
 n_token_in=2
 input_size=1
 N_CLASS=20
-lr=0.001
+lr=0.056
 auto_lr_find=False
 shuffle=False
 
@@ -51,7 +52,8 @@ launcher = python scripts/main.py \
 
 
 train = $(launcher) \
-        --action=train --seed=$(SEED) --epochs=$(N_EPOCHS) --lr=$(lr) --auto_lr_find=$(auto_lr_find)
+        --action=train --seed=$(SEED) --epochs=$(N_EPOCHS) --lr=$(lr) --auto_lr_find=$(auto_lr_find) \
+        --resume=$(RESUME)
 
 
 test = $(launcher) \
@@ -63,13 +65,13 @@ test = $(launcher) \
 
 gru: gru-train gru-test
 
-gru-vars = hidden_size=256 \
-		num_layers=2 \
+gru-vars = hidden_size=1 \
+		num_layers=1 \
 		batch_first=true \
 		bidirectional=true \
 		dropout=0.1 \
-		conv_n_layers=4 \
-		kernel_size=5
+		conv_n_layers=1 \
+		kernel_size=1
 
 $(call assign-vars, gru-train gru-test, $(gru-vars))
 
