@@ -1,11 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pytorch_lightning as pl
 
 from .conv_layer import ConvLayer
 from .training_process import LightningModuleExtended
-# from genomics_utils import one_hot_encoding
 
 
 class Model:
@@ -28,9 +26,9 @@ class EncoderGRU(LightningModuleExtended):
                  hidden_size, num_layers, batch_first, bidirectional,
                  dropout, n_output, conv_n_layers):
         super().__init__()
-        # conv
         self.save_hyperparameters()
-    
+
+        # conv
         self.conv1d = torch.nn.Conv1d(in_channels=input_size,
                                       out_channels=hidden_size,
                                       kernel_size=kernel_size,
@@ -67,8 +65,6 @@ class EncoderGRU(LightningModuleExtended):
         self.dropout2 = nn.Dropout(dropout)
         self.dense3 = nn.Linear(hidden_size, n_output)
         
-        self.lr = 0.007
-    
     def forward(self, input):
         """
         :param input: (batch_size, pad_seq_len)

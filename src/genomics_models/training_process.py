@@ -1,11 +1,7 @@
 import os
-import abc
 from typing import Any
 import torch
 import pytorch_lightning as pl
-from pytorch_lightning import loggers as pl_loggers
-import numpy as np
-import tqdm
 
 
 class LightningModuleExtended(pl.LightningModule):
@@ -13,6 +9,7 @@ class LightningModuleExtended(pl.LightningModule):
         super().__init__()
         self.loss = torch.nn.KLDivLoss(reduction='batchmean')
         self.example_input_array = torch.LongTensor(1, 10).random_(0, 2)
+        self.lr = 0.001
 
     def training_step(self, batch, batch_ix):
         X_batch, y_batch = batch
@@ -24,6 +21,9 @@ class LightningModuleExtended(pl.LightningModule):
         return result
     
     def configure_optimizers(self):
+        print(self.lr, "sf")
+        print(self.lr, "sf")
+        print(self.lr, "sf")
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
     
@@ -33,37 +33,15 @@ class LightningModuleExtended(pl.LightningModule):
         preds = torch.exp(logits)
         preds = torch.flatten(preds, start_dim=0, end_dim=1)
         y = y_batch.flatten()
-        self.logger.plot_coalescent_heatmap([preds.T, y.T], batch_idx)
+        self.logger.log_coalescent_heatmap(self.name, [preds.T, y.T], batch_idx)
         
-    def predict_proba(self, dataset: pl.LightningDataModule, logger: Any, mean=False):
-        with torch.no_grad():
-            heatmap_predictions = []
-            ground_truth = []
-            for ix, (X, y) in tqdm(enumerate(dataset.tes)):
-                torch.cuda.empty_cache()
-                X = torch.from_numpy(X).to(self.device)
-                preds = self.forward(X)
-                preds = torch.exp(preds)
-                preds = torch.flatten(preds, start_dim=0, end_dim=1)
-                y = y.flatten()
-            
-                if mean:
-                    heatmap_predictions.append(np.mean(preds.cpu().detach().numpy(), axis=0))
-                    ground_truth.append(np.mean(y, axis=0))
-                else:
-                    preds = preds.cpu().detach().numpy()
-                
-                    heatmap_predictions.extend(preds)
-                    ground_truth.extend(y)
-                
-                    logger.log_coalescent_heatmap(self.name, [preds.T, y.T], ix)
-    
-        return np.array(heatmap_predictions).T, np.array(ground_truth).T
-
-    def save(self, trainer, parameters_path):
+    def save(self, trainer: pl.Trainer, parameters_path: str):
         if os.environ.get("FAST_RUN") is None or not os.path.exists(parameters_path):
             print('saving to {parameters_path}'.format(parameters_path=parameters_path))
             trainer.save_checkpoint(filepath=parameters_path)
+            
+            # save to comet-ml
+            trainer.logger.experiment.log_model(self.name, parameters_path)
 
 
 def one_hot_encoding(y_data, num_class):

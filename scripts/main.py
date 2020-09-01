@@ -2,11 +2,10 @@ import comet_ml
 
 import os
 import pytorch_lightning as pl
-from pytorch_lightning import loggers as pl_loggers
-from typing import Any
 
 from genomics_data import RandomDataIteratorOneSeq, SequentialDataIterator, DatasetPL
 from genomics_utils import available, ensure_directories, boolean_string
+from genomics_utils import CometLightningLogger
 
 
 def lightning_train(trainer: pl.Trainer,
@@ -15,22 +14,20 @@ def lightning_train(trainer: pl.Trainer,
                     output: str,
                     resume: bool
                     ):
-    
     model_root, = ensure_directories(output, 'models/')
     parameters_path = os.path.join(
         model_root,
         '{model}.pt'.format(model=model.name)
     )
-
+    
     if resume:
         trainer = pl.Trainer(resume_from_checkpoint=parameters_path)
-
-    trainer.logger.experiment.set_name(model.name)
+    
     print("Running {}-model...".format(model.name))
     
     # main part here
     data_module.setup('fit')
-    trainer.fit(model, data_module)
+    trainer.fit(model=model, datamodule=data_module)
     
     model.save(trainer, parameters_path)
     # logger.log_losses("dataset", model.name, losses)
@@ -38,8 +35,21 @@ def lightning_train(trainer: pl.Trainer,
 
 def lightning_test(trainer: pl.Trainer,
                    model: pl.LightningModule,
-                   data_module: pl.LightningDataModule
+                   datamodule: pl.LightningDataModule
                    ):
+    
+    trainer.logger.experiment.set_name(model.name + "_test")
+    datamodule.setup('test')
+    trainer.test(model=model,
+                 datamodule=datamodule)
+    
+    return
+
+
+def separate_test(trainer: pl.Trainer,
+                  model: pl.LightningModule,
+                  datamodule: pl.LightningDataModule
+                  ):
     model_root, = ensure_directories(args.output, 'models/')
     parameters_path = os.path.join(
         model_root,
@@ -48,8 +58,9 @@ def lightning_test(trainer: pl.Trainer,
     print(type(model))
     model = type(model).load_from_checkpoint(checkpoint_path=parameters_path)
     
-    data_module.setup('test')
-    trainer.test(model, data_module)
+    datamodule.setup('test')
+    trainer.test(model=model,
+                 datamodule=datamodule)
     # logger.log_coalescent_heatmap(model.name, heatmap_preds, "00000")
 
 
@@ -86,7 +97,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--epochs', type=int, default=16)
     parser.add_argument('--lr', type=float, default=0.01)
-    parser.add_argument('--auto_lr_find', type=boolean_string, default=True)
+    parser.add_argument('--auto_lr_find', type=boolean_string, default=False)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--num_workers', type=int, default=1)
     parser.add_argument('--shuffle', type=boolean_string, default=False)
@@ -109,62 +120,49 @@ if __name__ == '__main__':
     
     model = available.models[args.model].Model(args)
     
-    comet_logger = pl_loggers.CometLogger(workspace=args.workspace,
-                                          project_name=args.project,
-                                          save_dir=args.output,
-                                          offline=args.offline,
-                                          parse_args=False,
-                                          auto_metric_logging=False,
-                                          disabled=True
-                                          )
+    comet_logger = CometLightningLogger(workspace=args.workspace,
+                                        project_name=args.project,
+                                        save_dir=args.output,
+                                        offline=args.offline,
+                                        parse_args=False,
+                                        auto_metric_logging=False,
+                                        disabled=True,
+                                        experiment_name=model.name
+                                        )
     
     trainer = pl.Trainer(logger=comet_logger,
                          max_epochs=args.epochs,
                          auto_lr_find=args.auto_lr_find,
-                         checkpoint_callback=False
+                         checkpoint_callback=False,
+                         gpus=0 if args.device == 'cpu' else 1,
                          )
     
-    data_module = DatasetPL(path=args.data,
-                            tr_file_first=args.tr_file_first,
-                            tr_file_last=args.tr_file_last,
-                            te_file_first=args.te_file_first,
-                            te_file_last=args.te_file_last,
-                            one_side_padding=args.padding,
-                            seq_len=args.seq_len,
-                            batch_size=args.batch_size,
-                            shuffle=args.shuffle,
-                            num_workers=args.num_workers)
+    datamodule = DatasetPL(path=args.data,
+                           tr_file_first=args.tr_file_first,
+                           tr_file_last=args.tr_file_last,
+                           te_file_first=args.te_file_first,
+                           te_file_last=args.te_file_last,
+                           one_side_padding=args.padding,
+                           seq_len=args.seq_len,
+                           batch_size=args.batch_size,
+                           shuffle=args.shuffle,
+                           num_workers=args.num_workers)
     
     if args.action == 'train':
         lightning_train(trainer=trainer,
                         model=model,
-                        data_module=data_module,
+                        data_module=datamodule,
                         output=args.output,
                         resume=args.resume
                         )
-        # train(
-        #     dataset=dataset, model=model,
-        #     device=args.device, seed=args.seed,
-        #     n_epochs=args.epochs, batch_size=args.batch_size,
-        #     output_path=args.output, logger=logger,
-        #     num_workers=args.num_workers, quiet=args.quiet
-        # )
-        # test(
-        #     dataset=dataset, model=model,
-        #     device=args.device, batch_size=args.batch_size,
-        #     output_path=args.output, logger=logger, project=args.project,
-        #     workspace=args.workspace
-        # )
-    elif args.action == 'test':
         lightning_test(trainer=trainer,
                        model=model,
-                       data_module=data_module
+                       datamodule=datamodule
                        )
-        # test(
-        #     dataset=dataset, model=model,
-        #     device=args.device, batch_size=args.batch_size,
-        #     output_path=args.output, logger=logger, project=args.project,
-        #     workspace=args.workspace
-        # )
+    elif args.action == 'test':
+        separate_test(trainer=trainer,
+                      model=model,
+                      datamodule=datamodule
+                      )
     else:
         raise ValueError("Unknown option {}".format(args.action))

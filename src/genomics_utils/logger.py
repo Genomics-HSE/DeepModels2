@@ -11,7 +11,7 @@ from .common import  ensure_directories
 
 __all__ = [
     'LocalLogger', 'CometLogger',
-    'get_logger',
+    'get_logger', 'CometLightningLogger'
 ]
 
 
@@ -155,22 +155,28 @@ def get_logger(logger, root, project=None, workspace=None, offline=True) -> Logg
 
 class CometLightningLogger(pl_loggers.CometLogger, CometLogger):
     def __init__(self, *args, **kwargs):
-        super(CustomCometLogger, self).__init__(*args, **kwargs)
-    
-    def _log_coalescent_heatmap(self, model_name, averaged_coals, ix):
-        from .viz import make_coalescent_heatmap
-        ensure_directories(self._figure_root, model_name)
-        
-        f = make_coalescent_heatmap(model_name, averaged_coals)
-        
-        plt.savefig(
-            os.path.join(
-                self._figure_root, model_name,
-                '{ix}-heatmap-{model}.png'.format(ix=ix, model=model_name)
-            )
-        )
-        return f
+        super().__init__(*args, **kwargs)
     
     def log_coalescent_heatmap(self, model_name, averaged_coals, ix):
-        f = self._log_coalescent_heatmap(model_name, averaged_coals, ix)
-        plt.close(f)
+        from .viz import make_coalescent_heatmap
+        # ensure_directories(self._figure_root, model_name)
+
+        figure_name = os.path.join(
+            model_name,
+            '{ix}-heatmap-{model}.png'.format(ix=ix, model=model_name)
+        )
+        figure = make_coalescent_heatmap(model_name, averaged_coals)
+        
+        self.experiment.log_figure(
+            figure_name=figure_name,
+            figure=figure,
+        )
+        
+        # plt.savefig(
+        #     os.path.join(
+        #         self._figure_root, model_name,
+        #         '{ix}-heatmap-{model}.png'.format(ix=ix, model=model_name)
+        #     )
+        # )
+        
+        plt.close(figure)

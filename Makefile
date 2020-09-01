@@ -20,7 +20,7 @@ n_token_in=2
 input_size=1
 N_CLASS=20
 lr=0.056
-auto_lr_find=False
+auto_lr_find=True
 shuffle=False
 
 tr_file_first=0
@@ -66,12 +66,12 @@ test = $(launcher) \
 gru: gru-train gru-test
 
 gru-vars = hidden_size=1 \
-		num_layers=1 \
+		num_layers=2 \
 		batch_first=true \
 		bidirectional=true \
 		dropout=0.1 \
-		conv_n_layers=1 \
-		kernel_size=1
+		conv_n_layers=4 \
+		kernel_size=5
 
 $(call assign-vars, gru-train gru-test, $(gru-vars))
 
