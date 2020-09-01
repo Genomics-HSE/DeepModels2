@@ -21,9 +21,6 @@ class LightningModuleExtended(pl.LightningModule):
         return result
     
     def configure_optimizers(self):
-        print(self.lr, "sf")
-        print(self.lr, "sf")
-        print(self.lr, "sf")
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
     
