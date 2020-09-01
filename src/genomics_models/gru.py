@@ -18,7 +18,7 @@ class Model:
                           bidirectional=args.bidirectional,
                           dropout=args.dropout,
                           n_output=args.n_output,
-                          conv_n_layers=args.conv_n_layers).to(args.device)
+                          conv_n_layers=args.conv_n_layers)
 
 
 class EncoderGRU(LightningModuleExtended):

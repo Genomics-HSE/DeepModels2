@@ -8,7 +8,7 @@ class LightningModuleExtended(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.loss = torch.nn.KLDivLoss(reduction='batchmean')
-        self.example_input_array = torch.LongTensor(1, 10).random_(0, 2)
+        # self.example_input_array = torch.LongTensor(1, 10).random_(0, 2)
         self.lr = 0.001
 
     def training_step(self, batch, batch_ix):
