@@ -19,7 +19,7 @@ padding=0
 n_token_in=2
 input_size=1
 N_CLASS=20
-lr=0.056
+lr=0.001
 auto_lr_find=False
 shuffle=False
 
