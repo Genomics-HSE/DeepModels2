@@ -13,9 +13,9 @@ class LightningModuleExtended(pl.LightningModule):
 
     def training_step(self, batch, batch_ix):
         X_batch, y_batch = batch
-        y_one_hot = one_hot_encoding(y_batch, self.n_output)
+        # y_one_hot = one_hot_encoding(y_batch, self.n_output)
         logits = self.forward(X_batch)
-        loss = self.loss(logits, y_one_hot)
+        loss = self.loss(logits, y_batch)
         result = pl.TrainResult(minimize=loss)
         result.log("train_loss", loss, on_step=True, on_epoch=True)
         return result
