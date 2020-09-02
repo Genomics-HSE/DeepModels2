@@ -123,7 +123,7 @@ class DatasetTorch(data.Dataset):
 class MockDataset(data.Dataset):
     def __init__(self, batch_size: int, seq_len: int, one_side_padding: int):
         super(MockDataset, self).__init__()
-        n_batches = 50
+        n_batches = 400
         n_samples = n_batches * batch_size
         self.X_data = torch.LongTensor(n_samples, seq_len + 2 * one_side_padding).random_(0, 2)
         self.y_data = torch.LongTensor(n_samples, seq_len).random_(0, 20)

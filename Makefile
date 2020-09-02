@@ -65,13 +65,13 @@ test = $(launcher) \
 
 gru: gru-train gru-test
 
-gru-vars = hidden_size=1 \
+gru-vars = hidden_size=256 \
 		num_layers=2 \
 		batch_first=true \
 		bidirectional=true \
 		dropout=0.1 \
 		conv_n_layers=4 \
-		kernel_size=5
+		kernel_size=21
 
 $(call assign-vars, gru-train gru-test, $(gru-vars))
 

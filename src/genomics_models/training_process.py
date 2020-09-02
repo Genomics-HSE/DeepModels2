@@ -36,9 +36,6 @@ class LightningModuleExtended(pl.LightningModule):
         if os.environ.get("FAST_RUN") is None or not os.path.exists(parameters_path):
             print('saving to {parameters_path}'.format(parameters_path=parameters_path))
             trainer.save_checkpoint(filepath=parameters_path)
-            
-            # save to comet-ml
-            trainer.logger.experiment.log_model(self.name, parameters_path)
 
 
 def one_hot_encoding(y_data, num_class):

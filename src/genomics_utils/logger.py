@@ -2,16 +2,16 @@ import os
 import json
 
 import numpy as np
-from comet_ml import Experiment, OfflineExperiment
+from comet_ml import Experiment, OfflineExperiment, ExistingExperiment
 from pytorch_lightning import loggers as pl_loggers
 import matplotlib.pyplot as plt
 
 from genomics_utils import ensure_directories
-from .common import  ensure_directories
+from .common import ensure_directories
 
 __all__ = [
     'LocalLogger', 'CometLogger',
-    'get_logger', 'CometLightningLogger'
+    'get_logger', 'CometLightningLogger', 'ExistingCometLightningLogger'
 ]
 
 
@@ -81,7 +81,7 @@ class LocalLogger(Logger):
     def log_losses(self, dataset_name, model_name, losses):
         f = self._log_learning_curve(dataset_name, model_name, losses)
         plt.close(f)
-        
+    
     def _log_coalescent_heatmap(self, model_name, averaged_coals, ix):
         from .viz import make_coalescent_heatmap
         ensure_directories(self._figure_root, model_name)
@@ -95,7 +95,7 @@ class LocalLogger(Logger):
             )
         )
         return f
-
+    
     def log_coalescent_heatmap(self, model_name, averaged_coals, ix):
         f = self._log_coalescent_heatmap(model_name, averaged_coals, ix)
         plt.close(f)
@@ -153,13 +153,11 @@ def get_logger(logger, root, project=None, workspace=None, offline=True) -> Logg
         raise ValueError("Unknown experiment context")
 
 
-class CometLightningLogger(pl_loggers.CometLogger, CometLogger):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class BaseLightningLogger:
     
     def log_coalescent_heatmap(self, model_name, averaged_coals, ix):
         from .viz import make_coalescent_heatmap
-
+        
         figure_name = os.path.join(
             model_name,
             '{ix}-heatmap-{model}.png'.format(ix=ix, model=model_name)
@@ -172,3 +170,13 @@ class CometLightningLogger(pl_loggers.CometLogger, CometLogger):
         )
         
         plt.close(figure)
+
+
+class CometLightningLogger(pl_loggers.CometLogger, BaseLightningLogger):
+    def __init__(self, *args, **kwargs):
+        super(CometLightningLogger, self).__init__(*args, **kwargs)
+
+
+class ExistingCometLightningLogger(ExistingExperiment, BaseLightningLogger):
+    def __init__(self, *args, **kwargs):
+        super(ExistingCometLightningLogger, self).__init__(*args, **kwargs)
