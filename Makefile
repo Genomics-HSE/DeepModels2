@@ -20,7 +20,7 @@ n_token_in=2
 input_size=1
 N_CLASS=20
 lr=0.001
-auto_lr_find=False
+auto_lr_find=True
 shuffle=False
 
 tr_file_first=0

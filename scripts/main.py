@@ -23,6 +23,7 @@ def lightning_train(trainer: pl.Trainer,
     if resume:
         trainer = pl.Trainer(resume_from_checkpoint=parameters_path)
     
+    comet_api_key = trainer.logger.experiment.get_key()
     print("Running {}-model...".format(model.name))
     
     # main part here
@@ -31,14 +32,19 @@ def lightning_train(trainer: pl.Trainer,
     
     model.save(trainer, parameters_path)
     # logger.log_losses("dataset", model.name, losses)
+    
+    return model, comet_api_key
 
 
 def lightning_test(trainer: pl.Trainer,
                    model: pl.LightningModule,
-                   datamodule: pl.LightningDataModule
-                   ):
+                   datamodule: pl.LightningDataModule,
+                   api_key: str):
+    # comet_logger = CometLightningLogger(previous_experiment=api_key,
+    #                                    offline=True)
+    # trainer = pl.Trainer(logger=comet_logger)
+    # trainer.logger = comet_logger
     
-    trainer.logger.experiment.set_name(model.name + "_test")
     datamodule.setup('test')
     trainer.test(model=model,
                  datamodule=datamodule)
@@ -126,7 +132,7 @@ if __name__ == '__main__':
                                         offline=args.offline,
                                         parse_args=False,
                                         auto_metric_logging=False,
-                                        disabled=True,
+                                        disabled=False,
                                         experiment_name=model.name
                                         )
     
@@ -149,15 +155,16 @@ if __name__ == '__main__':
                            num_workers=args.num_workers)
     
     if args.action == 'train':
-        lightning_train(trainer=trainer,
-                        model=model,
-                        data_module=datamodule,
-                        output=args.output,
-                        resume=args.resume
-                        )
+        model, exp_api_key = lightning_train(trainer=trainer,
+                                             model=model,
+                                             data_module=datamodule,
+                                             output=args.output,
+                                             resume=args.resume
+                                             )
         lightning_test(trainer=trainer,
                        model=model,
-                       datamodule=datamodule
+                       datamodule=datamodule,
+                       api_key=exp_api_key
                        )
     elif args.action == 'test':
         separate_test(trainer=trainer,

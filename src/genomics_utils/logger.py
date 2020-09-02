@@ -159,7 +159,6 @@ class CometLightningLogger(pl_loggers.CometLogger, CometLogger):
     
     def log_coalescent_heatmap(self, model_name, averaged_coals, ix):
         from .viz import make_coalescent_heatmap
-        # ensure_directories(self._figure_root, model_name)
 
         figure_name = os.path.join(
             model_name,
@@ -171,12 +170,5 @@ class CometLightningLogger(pl_loggers.CometLogger, CometLogger):
             figure_name=figure_name,
             figure=figure,
         )
-        
-        # plt.savefig(
-        #     os.path.join(
-        #         self._figure_root, model_name,
-        #         '{ix}-heatmap-{model}.png'.format(ix=ix, model=model_name)
-        #     )
-        # )
         
         plt.close(figure)
