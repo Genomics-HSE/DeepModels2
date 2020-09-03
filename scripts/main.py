@@ -3,7 +3,6 @@ from typing import Any
 import os
 
 import pytorch_lightning as pl
-from pytorch_lightning import loggers as pl_logger
 
 from genomics_data import RandomDataIteratorOneSeq, SequentialDataIterator, DatasetPL
 from genomics_utils import available, ensure_directories, boolean_string
@@ -38,7 +37,7 @@ def lightning_test(model: pl.LightningModule,
                    logger: Any
                    ):
     if len(experiment_key) > 0:
-        logger = pl_logger.CometLogger(experiment_key=experiment_key)
+        logger = CometLightningLogger(experiment_key=experiment_key)
     
     trainer = pl.Trainer(logger=logger)
     model.load_from_checkpoint(checkpoint_path=checkpoint_path)
