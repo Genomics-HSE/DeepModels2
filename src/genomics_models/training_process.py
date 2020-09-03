@@ -29,13 +29,19 @@ class LightningModuleExtended(pl.LightningModule):
         logits = self.forward(X_batch)
         preds = torch.exp(logits)
         preds = torch.flatten(preds, start_dim=0, end_dim=1)
+
+        y_batch = torch.argmax(y_batch, dim=-1)
         y = y_batch.flatten()
+        
+        preds = preds.cpu().detach()
         self.logger.log_coalescent_heatmap(self.name, [preds.T, y.T], batch_idx)
         
     def save(self, trainer: pl.Trainer, parameters_path: str):
         if os.environ.get("FAST_RUN") is None or not os.path.exists(parameters_path):
             print('saving to {parameters_path}'.format(parameters_path=parameters_path))
             trainer.save_checkpoint(filepath=parameters_path)
+            
+            trainer.logger.experiment.log_model(self.name, parameters_path)
 
 
 def one_hot_encoding(y_data, num_class):

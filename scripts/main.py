@@ -3,6 +3,7 @@ import comet_ml
 import os
 import pytorch_lightning as pl
 
+from typing import Any
 from genomics_data import RandomDataIteratorOneSeq, SequentialDataIterator, DatasetPL
 from genomics_utils import available, ensure_directories, boolean_string
 from genomics_utils import CometLightningLogger, ExistingCometLightningLogger
@@ -11,65 +12,43 @@ from genomics_utils import CometLightningLogger, ExistingCometLightningLogger
 def lightning_train(trainer: pl.Trainer,
                     model: pl.LightningModule,
                     data_module: pl.LightningDataModule,
-                    output: str,
+                    checkpoint_path: str,
                     resume: bool
                     ):
-    model_root, = ensure_directories(output, 'models/')
-    parameters_path = os.path.join(
-        model_root,
-        '{model}.pt'.format(model=model.name)
-    )
-    
     if resume:
-        trainer = pl.Trainer(resume_from_checkpoint=parameters_path)
+        trainer = pl.Trainer(resume_from_checkpoint=checkpoint_path)
     
-    comet_api_key = trainer.logger.experiment.get_key()
+    exp_key = trainer.logger.experiment.get_key()
     print("Running {}-model...".format(model.name))
     
     # main part here
     data_module.setup('fit')
     trainer.fit(model=model, datamodule=data_module)
     
-    model.save(trainer, parameters_path)
-    # logger.log_losses("dataset", model.name, losses)
+    model.save(trainer, checkpoint_path)
     
-    return trainer, model, comet_api_key
+    return trainer, model, exp_key
 
 
-def lightning_test(trainer: pl.Trainer,
+def lightning_test(trainer: Any,
                    model: pl.LightningModule,
+                   checkpoint_path: str,
                    datamodule: pl.LightningDataModule,
-                   api_key: str,
-                   logger: CometLightningLogger,
-                   path: str):
-    # trainer = pl.Trainer(logger=logger)
-    weights_path = os.path.join(path, 'models/', model.name + ".pt")
-    trainer.logger.experiment.log_model(model.name, weights_path)
+                   experiment_key: str,
+                   ):
+    comet_logger = CometLightningLogger(experiment_key=experiment_key,
+                                        offline=False)
     
-    trainer.auto_lr_find = False
+    trainer = pl.Trainer(logger=comet_logger)
+    # trainer.logger = logger
+    # trainer.auto_lr_find = False
+    model.load_from_checkpoint(checkpoint_path=checkpoint_path)
+    
     datamodule.setup('test')
     trainer.test(model=model,
                  datamodule=datamodule)
     
     return
-
-
-def separate_test(trainer: pl.Trainer,
-                  model: pl.LightningModule,
-                  datamodule: pl.LightningDataModule
-                  ):
-    model_root, = ensure_directories(args.output, 'models/')
-    parameters_path = os.path.join(
-        model_root,
-        '{model}.pt'.format(model=model.name)
-    )
-    print(type(model))
-    model = type(model).load_from_checkpoint(checkpoint_path=parameters_path)
-    
-    datamodule.setup('test')
-    trainer.test(model=model,
-                 datamodule=datamodule)
-    # logger.log_coalescent_heatmap(model.name, heatmap_preds, "00000")
 
 
 if __name__ == '__main__':
@@ -83,6 +62,7 @@ if __name__ == '__main__':
         help='directory from which data is read or to which data will be downloaded if absent, '
     )
     parser.add_argument('--resume', type=boolean_string, default=False)
+    parser.add_argument('--exp_key', type=str, default="")
     parser.add_argument('--output', type=str, default='output/', help='root directory to write various statistics to')
     parser.add_argument('--device', type=str, default='cpu', help='device in torch format')
     parser.add_argument('--logger', type=str, choices=['local', 'comet'], default='local')
@@ -155,25 +135,32 @@ if __name__ == '__main__':
                            batch_size=args.batch_size,
                            shuffle=args.shuffle,
                            num_workers=args.num_workers)
+
+    model_root, = ensure_directories(args.output, 'models/')
+    checkpoint_path = os.path.join(
+        model_root,
+        '{model}.pt'.format(model=model.name)
+    )
     
     if args.action == 'train':
-        trainer, model, exp_api_key = lightning_train(trainer=trainer,
-                                                      model=model,
-                                                      data_module=datamodule,
-                                                      output=args.output,
-                                                      resume=args.resume
-                                                      )
+        trainer, model, exp_key = lightning_train(trainer=trainer,
+                                                  model=model,
+                                                  data_module=datamodule,
+                                                  checkpoint_path=checkpoint_path,
+                                                  resume=args.resume
+                                                  )
         lightning_test(trainer=trainer,
                        model=model,
+                       checkpoint_path=checkpoint_path,
                        datamodule=datamodule,
-                       api_key=exp_api_key,
-                       logger=comet_logger,
-                       path=args.output
+                       experiment_key=exp_key
                        )
     elif args.action == 'test':
-        separate_test(trainer=trainer,
-                      model=model,
-                      datamodule=datamodule
-                      )
+        lightning_test(trainer=None,
+                       model=model,
+                       checkpoint_path=checkpoint_path,
+                       datamodule=datamodule,
+                       experiment_key=args.exp_key
+                       )
     else:
         raise ValueError("Unknown option {}".format(args.action))

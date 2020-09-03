@@ -14,6 +14,7 @@ PROJECT = population-genomics-new
 WORKSPACE = kenenbek
 OFFLINE = True
 RESUME = False
+exp_key = ""
 
 padding=0
 n_token_in=2
@@ -57,7 +58,7 @@ train = $(launcher) \
 
 
 test = $(launcher) \
-		--action=test
+		--action=test --exp_key=$(exp_key)
 
 ########################
 #    Recurrent MODEL   #
