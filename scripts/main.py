@@ -35,11 +35,13 @@ def lightning_test(trainer: Any,
                    checkpoint_path: str,
                    datamodule: pl.LightningDataModule,
                    experiment_key: str,
+                   logger: Any
                    ):
     comet_logger = CometLightningLogger(experiment_key=experiment_key,
-                                        offline=False)
+                                        save_dir="output",
+                                        offline=True)
     
-    trainer = pl.Trainer(logger=comet_logger)
+    trainer = pl.Trainer(logger=logger)
     # trainer.logger = logger
     # trainer.auto_lr_find = False
     model.load_from_checkpoint(checkpoint_path=checkpoint_path)
@@ -153,14 +155,16 @@ if __name__ == '__main__':
                        model=model,
                        checkpoint_path=checkpoint_path,
                        datamodule=datamodule,
-                       experiment_key=exp_key
+                       experiment_key=exp_key,
+                       logger=comet_logger,
                        )
     elif args.action == 'test':
         lightning_test(trainer=None,
                        model=model,
                        checkpoint_path=checkpoint_path,
                        datamodule=datamodule,
-                       experiment_key=args.exp_key
+                       experiment_key=args.exp_key,
+                       logger=comet_logger
                        )
     else:
         raise ValueError("Unknown option {}".format(args.action))
