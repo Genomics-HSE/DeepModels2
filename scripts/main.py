@@ -1,9 +1,10 @@
 import comet_ml
-
-import os
-import pytorch_lightning as pl
-
 from typing import Any
+import os
+
+import pytorch_lightning as pl
+from pytorch_lightning import loggers as pl_logger
+
 from genomics_data import RandomDataIteratorOneSeq, SequentialDataIterator, DatasetPL
 from genomics_utils import available, ensure_directories, boolean_string
 from genomics_utils import CometLightningLogger, ExistingCometLightningLogger
@@ -30,20 +31,16 @@ def lightning_train(trainer: pl.Trainer,
     return trainer, model, exp_key
 
 
-def lightning_test(trainer: Any,
-                   model: pl.LightningModule,
+def lightning_test(model: pl.LightningModule,
                    checkpoint_path: str,
                    datamodule: pl.LightningDataModule,
                    experiment_key: str,
                    logger: Any
                    ):
-    comet_logger = CometLightningLogger(experiment_key=experiment_key,
-                                        save_dir="output",
-                                        offline=True)
+    if len(experiment_key) > 0:
+        logger = pl_logger.CometLogger(experiment_key=experiment_key)
     
     trainer = pl.Trainer(logger=logger)
-    # trainer.logger = logger
-    # trainer.auto_lr_find = False
     model.load_from_checkpoint(checkpoint_path=checkpoint_path)
     
     datamodule.setup('test')
@@ -151,16 +148,14 @@ if __name__ == '__main__':
                                                   checkpoint_path=checkpoint_path,
                                                   resume=args.resume
                                                   )
-        lightning_test(trainer=trainer,
-                       model=model,
+        lightning_test(model=model,
                        checkpoint_path=checkpoint_path,
                        datamodule=datamodule,
-                       experiment_key=exp_key,
+                       experiment_key="",
                        logger=comet_logger,
                        )
     elif args.action == 'test':
-        lightning_test(trainer=None,
-                       model=model,
+        lightning_test(model=model,
                        checkpoint_path=checkpoint_path,
                        datamodule=datamodule,
                        experiment_key=args.exp_key,
