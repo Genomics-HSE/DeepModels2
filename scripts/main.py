@@ -40,7 +40,7 @@ def lightning_test(model: pl.LightningModule,
         logger = CometLightningLogger(experiment_key=experiment_key)
     
     trainer = pl.Trainer(logger=logger)
-    model.load_from_checkpoint(checkpoint_path=checkpoint_path)
+    model = model.load_from_checkpoint(checkpoint_path=checkpoint_path)
     
     datamodule.setup('test')
     trainer.test(model=model,
