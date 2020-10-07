@@ -10,7 +10,7 @@ from genomics_utils import ensure_directories
 from .common import ensure_directories
 
 __all__ = [
-    'LocalLogger', 'CometLogger',
+    'LocalLogger', 'CometLogger', 'BaseLightningLogger',
     'get_logger', 'CometLightningLogger', 'ExistingCometLightningLogger'
 ]
 
@@ -168,7 +168,7 @@ class BaseLightningLogger:
             figure_name=figure_name,
             figure=figure,
         )
-        
+        # plt.show()
         plt.close(figure)
 
 

@@ -36,7 +36,7 @@ def make_learning_curve(dataset_name, model_name, losses, dpi=100):
     return f
 
 
-def make_coalescent_heatmap(model_name, averaged_data_tuple, dpi=300):
+def make_coalescent_heatmap(model_name, averaged_data_tuple, dpi=200):
     # f = plt.figure(, dpi=dpi)
     f, ax = plt.subplots(1, 1, dpi=dpi)  # figsize=(200, 10)
     im0 = ax.imshow(averaged_data_tuple[0], cmap='Wistia', aspect='auto')

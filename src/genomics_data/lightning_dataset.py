@@ -104,9 +104,9 @@ class DatasetTorch(data.Dataset):
             y_file_path = os.path.join(y_path, filename)
             X_seq_padded_tr, y_seq_tr = load_with_padding_X_y(X_file_path, y_file_path, one_side_padding)
             X_data_i, y_data_i = batchify(X_seq_padded_tr, y_seq_tr, seq_len, one_side_padding)
-            y_data_i_one_hot = one_hot_encoding_numpy(y_data_i, 20)
+            # y_data_i_one_hot = one_hot_encoding_numpy(y_data_i, 20)
             X_data_res.append(X_data_i)
-            y_data_res.append(y_data_i_one_hot)
+            y_data_res.append(y_data_i)
         
         self.X_data = np.vstack(X_data_res)
         self.y_data = np.vstack(y_data_res)

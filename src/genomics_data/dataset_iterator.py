@@ -120,14 +120,33 @@ def batchify(padded_x_seq, y_seq, seq_len, one_side_padding):
     return X_batch, y_batch
 
 
-def load_with_padding_X_y(X_file_path, y_file_path, one_side_padding, mmap=None):
-    X_seq = np.pad(
-        np.load(X_file_path, mmap_mode=mmap),
-        pad_width=(one_side_padding,),
-        mode='constant',
-        constant_values=(-1,)
-    )
-    y_seq = np.load(y_file_path, mmap_mode=mmap)
+def load_with_padding_X_y(X_file_path: str, y_file_path: str, one_side_padding: int, mmap=None):
+    """
+    Load file depending on its type (torch or numpy)
+    :param X_file_path: must by "*.npy" or "*.pt"
+    :param y_file_path: must by "*.npy" or "*.pt"
+    :param one_side_padding: padding length
+    :param mmap: the option to use swap when using numpy load
+    :return: data
+    """
+    
+    if X_file_path.endswith(".npy") and y_file_path.endswith(".npy"):
+        X_seq = np.pad(
+            np.load(X_file_path, mmap_mode=mmap),
+            pad_width=(one_side_padding,),
+            mode='constant',
+            constant_values=(-1,)
+        )
+        y_seq = np.load(y_file_path, mmap_mode=mmap)
+    elif X_file_path.endswith(".pt") and y_file_path.endswith(".pt"):
+        X_seq = F.pad(
+            input=torch.load(X_file_path),
+            pad=[one_side_padding, one_side_padding],
+            value=-1
+        )
+        y_seq = torch.load(y_file_path)
+    else:
+        raise NameError("This shouldn't happen")
     return X_seq, y_seq
 
 
