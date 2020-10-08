@@ -1,11 +1,11 @@
-import os, sys
+import os
+import sys
+from math import (exp, log)
 
 import msprime
+import numpy as np
 import torch
 from tqdm import tqdm
-
-from math import (exp, log)
-import numpy as np
 
 RHO_HUMAN = 1.6*10e-9
 MU_HUMAN = 1.25*10e-8
@@ -20,7 +20,7 @@ LAMBDA_EXP = 1.0
 POPULATION_LIMITS = (250, 100000)
 POPULATION = 5000
 
-N = 20
+N = sys.argv[4]
 
 RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
