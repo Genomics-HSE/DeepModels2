@@ -13,8 +13,8 @@ class LightningModuleExtended(pl.LightningModule):
 
     def training_step(self, batch, batch_ix):
         X_batch, y_batch = batch
-        y_one_hot = one_hot_encoding(y_batch, self.n_output)
         logits = self.forward(X_batch)
+        y_one_hot = one_hot_encoding(y_batch, self.n_output, device=self.device)
         loss = self.loss(logits, y_one_hot)
         result = pl.TrainResult(minimize=loss)
         result.log("train_loss", loss, on_step=True, on_epoch=True)
@@ -44,9 +44,9 @@ class LightningModuleExtended(pl.LightningModule):
             trainer.logger.experiment.log_model(self.name, parameters_path)
 
 
-def one_hot_encoding(y_data, num_class):
+def one_hot_encoding(y_data, num_class, device):
     batch_size, seq_len = y_data.shape
-    y_one_hot = torch.FloatTensor(batch_size, seq_len, num_class)
+    y_one_hot = torch.FloatTensor(batch_size, seq_len, num_class).to(device)
     
     y_one_hot.zero_()
     y_one_hot.scatter_(2, y_data.unsqueeze(2), 1)
