@@ -20,7 +20,7 @@ LAMBDA_EXP = 1.0
 POPULATION_LIMITS = (250, 100000)
 POPULATION = 5000
 
-N = sys.argv[4]
+N = int(sys.argv[4])
 
 RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
