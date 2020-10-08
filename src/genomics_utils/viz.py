@@ -51,5 +51,5 @@ def make_coalescent_heatmap(model_name, averaged_data_tuple, dpi=200):
     ax.set_title("Softmax")
     plt.xlabel('site position')
     plt.ylabel('')
-    ax.yaxis.set_ticks(np.arange(0, 20, step=1))
+    ax.yaxis.set_ticks(np.arange(0, averaged_data_tuple[0].shape[1], step=1))
     return f
