@@ -27,7 +27,7 @@ class EncoderGRU(LightningModuleExtended):
                  dropout, n_output, conv_n_layers):
         super().__init__()
         self.save_hyperparameters()
-
+        
         # conv
         self.conv1d = torch.nn.Conv1d(in_channels=input_size,
                                       out_channels=hidden_size,
@@ -64,7 +64,7 @@ class EncoderGRU(LightningModuleExtended):
         self.dense2 = nn.Linear(hidden_size, hidden_size)
         self.dropout2 = nn.Dropout(dropout)
         self.dense3 = nn.Linear(hidden_size, n_output)
-        
+    
     def forward(self, input):
         """
         :param input: (batch_size, pad_seq_len)
@@ -95,12 +95,10 @@ class EncoderGRU(LightningModuleExtended):
     
     @property
     def name(self):
-        return 'CONV{}-GRU-sl{}-ker{}-hs{}-nl{}'.format(self.conv_n_layers,
-                                                        self.inp_seq_len,
-                                                        self.kernel_size,
-                                                        self.hidden_size,
-                                                        self.num_layers
-                                                        )
-
-
-
+        return 'Gen{}-CONV{}-GRU-sl{}-ker{}-hs{}-nl{}'.format(self.n_output,
+                                                              self.conv_n_layers,
+                                                              self.inp_seq_len,
+                                                              self.kernel_size,
+                                                              self.hidden_size,
+                                                              self.num_layers
+                                                              )
