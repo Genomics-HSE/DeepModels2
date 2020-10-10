@@ -106,6 +106,14 @@ if __name__ == '__main__':
     
     model = available.models[args.model].Model(args)
     
+    model_root, = ensure_directories(args.output, 'models/')
+    default_root_dir, = ensure_directories(args.output, 'models/{}'.format(model.name))
+    
+    checkpoint_path = os.path.join(
+        model_root,
+        '{model}.pt'.format(model=model.name)
+    )
+    
     comet_logger = CometLightningLogger(workspace=args.workspace,
                                         project_name=args.project,
                                         save_dir=args.output,
@@ -116,7 +124,8 @@ if __name__ == '__main__':
                                         experiment_name=model.name
                                         )
     
-    trainer = pl.Trainer(logger=comet_logger,
+    trainer = pl.Trainer(default_root_dir=default_root_dir,
+                         logger=comet_logger,
                          max_epochs=args.epochs,
                          auto_lr_find=args.auto_lr_find,
                          checkpoint_callback=False,
@@ -133,12 +142,6 @@ if __name__ == '__main__':
                            batch_size=args.batch_size,
                            shuffle=args.shuffle,
                            num_workers=args.num_workers)
-
-    model_root, = ensure_directories(args.output, 'models/')
-    checkpoint_path = os.path.join(
-        model_root,
-        '{model}.pt'.format(model=model.name)
-    )
     
     if args.action == 'train':
         trainer, model, exp_key = lightning_train(trainer=trainer,

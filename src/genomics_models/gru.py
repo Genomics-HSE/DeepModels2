@@ -90,7 +90,6 @@ class EncoderGRU(LightningModuleExtended):
         output = self.dropout1(F.relu(self.dense1(output)))
         output = self.dropout2(F.relu(self.dense2(output)))
         output = F.log_softmax(self.dense3(output), dim=-1)
-        
         return output
     
     @property
