@@ -1,5 +1,16 @@
 # Population genomics
 
+## Data generation 
+
+`data_gen_numpy` file has four arguments (`sys.argv`): 
+
+|Argument | Meaning |
+| --- | --- |
+| sys.argv[1] | Saving directory |
+| sys.argv[2] | Number of examples to generate |
+| sys.argv[3] |  Genome length |
+| sys.argv[4] | Number of generations |
+
 ## Models 
 
 - CNN :white_check_mark:
