@@ -61,30 +61,49 @@ test = $(launcher) \
 		--action=test --exp_key=$(exp_key)
 
 ########################
-#    Recurrent MODEL   #
+#    GRU               #
 ########################
 
 gru: gru-train gru-test
 
 gru-vars = hidden_size=256 \
-		num_layers=2 \
-		batch_first=true \
-		bidirectional=true \
-		dropout=0.1 \
-		conv_n_layers=4 \
-		kernel_size=21
+		   num_layers=2 \
+           batch_first=True \
+           bidirectional=True \
+           dropout=0.1
 
 $(call assign-vars, gru-train gru-test, $(gru-vars))
 
 gru-args = --hidden_size=$(hidden_size) --num_layers=$(num_layers) \
-           --batch_first=$(batch_first) --bidirectional=$(bidirectional) --dropout=$(dropout) \
-           --conv_n_layers=$(conv_n_layers) --kernel_size=$(kernel_size)
+           --batch_first=$(batch_first) --bidirectional=$(bidirectional) --dropout=$(dropout)
 
 gru-train:
 	$(train) gru $(gru-args)
 
 gru-test:
 	$(test) gru $(gru-args)
+
+########################
+#    Recurrent MODEL   #
+#    CNN + GRU         #
+########################
+
+conv-gru: conv-gru-train conv-gru-test
+
+conv-gru-vars = $(gru-vars) \
+		        conv_n_layers=4 \
+		        kernel_size=21
+
+$(call assign-vars, conv-gru-train conv-gru-test, $(conv-gru-vars))
+
+conv-gru-args = $(gru-args) \
+           --conv_n_layers=$(conv_n_layers) --kernel_size=$(kernel_size)
+
+conv-gru-train:
+	$(train) conv-gru $(conv-gru-args)
+
+conv-gru-test:
+	$(test) conv-gru $(conv-gru-args)
 
 ########################
 # CONVOLUTIONAL MODEL  #
