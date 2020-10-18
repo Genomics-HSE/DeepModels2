@@ -1,13 +1,17 @@
-
 def gru_add_arguments(parser):
-    parser.add_argument('--out_channels', type=int, default=128)
-    parser.add_argument('--kernel_size', type=int, default=1001)
     parser.add_argument('--hidden_size', type=int, default=64)
     parser.add_argument('--num_layers', type=int, default=2)
     parser.add_argument('--batch_first', type=bool, default=True)
     parser.add_argument('--bidirectional', type=bool, default=True)
     parser.add_argument('--dropout', type=float, default=0.2)
+
+
+def conv_gru_add_arguments(parser):
     parser.add_argument('--conv_n_layers', type=int)
+    parser.add_argument('--out_channels', type=int, default=128)
+    parser.add_argument('--kernel_size', type=int, default=1001)
+    
+    gru_add_arguments(parser)
     
 
 def conv_add_arguments(parser):
