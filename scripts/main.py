@@ -52,7 +52,7 @@ def lightning_test(model: pl.LightningModule,
 if __name__ == '__main__':
     import argparse
     from parser_args import gru_add_arguments, conv_bert_add_arguments, bert_add_arguments, conv_add_arguments, \
-        gru_one_dir_add_arguments
+        gru_one_dir_add_arguments, conv_gru_add_arguments
     
     parser = argparse.ArgumentParser(prog='Genomics')
     parser.add_argument(
@@ -91,12 +91,13 @@ if __name__ == '__main__':
     model_parsers = parser.add_subparsers(title='models', description='model to choose', dest='model')
     
     gru_parser = model_parsers.add_parser('gru')
-    conv_parser = model_parsers.add_parser('conv')
     conv_gru_parser = model_parsers.add_parser('conv-gru')
+    conv_parser = model_parsers.add_parser('conv')
     bert_parser = model_parsers.add_parser('bert')
     conv_bert_parser = model_parsers.add_parser('conv-bert')
     
     gru_add_arguments(gru_parser)
+    conv_gru_add_arguments(conv_gru_parser)
     conv_add_arguments(conv_parser)
     bert_add_arguments(bert_parser)
     conv_bert_add_arguments(conv_bert_parser)
