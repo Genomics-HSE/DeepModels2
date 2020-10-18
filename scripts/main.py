@@ -37,7 +37,8 @@ def lightning_test(model: pl.LightningModule,
                    logger: Any
                    ):
     if len(experiment_key) > 0:
-        logger = CometLightningLogger(experiment_key=experiment_key)
+        logger = CometLightningLogger(experiment_key=experiment_key,
+                                      experiment_name=model.name)
     
     trainer = pl.Trainer(logger=logger)
     model = model.load_from_checkpoint(checkpoint_path=checkpoint_path)
