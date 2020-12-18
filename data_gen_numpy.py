@@ -152,7 +152,15 @@ class Generator:
         
         d_times = [to_T(t) for t in coal_times]
         
-        return haplotype, d_times, recombination_points
+        prioty_distribution = [0.0 for i in range(N+1)]
+        for t in d_times:
+            prioty_distribution[t] += 1
+        prioty_distribution = [p/sum(prioty_distribution)
+                                for p in prioty_distribution]
+
+        intervals_starts = [np.e**(B*i+a) for i in range(N)]
+        
+        return haplotype, d_times, recombination_points, prioty_distribution, intervals_starts
 
 
 if __name__ == "__main__":
@@ -160,6 +168,8 @@ if __name__ == "__main__":
     
     x_path = os.path.join(sys.argv[1], "x")
     y_path = os.path.join(sys.argv[1], "y")
+    pd_path = os.path.join(sys.argv[1], "PD")
+    is_path = os.path.join(sys.argv[1], "IS")
     
     for name, i in tqdm(enumerate(generator)):
         x = np.array(i[0], dtype=np.int64)
@@ -169,6 +179,10 @@ if __name__ == "__main__":
         # one_hot[indices] = 1. 
         # y = torch.FloatTensor(one_hot)
         y = np.array(i[1], dtype=np.int64) - 1
+        pd = np.array(i[3])
+        is_ = np.array(i[4])
 
         np.save(x_path + "/" + str(name), x)
         np.save(y_path + "/" + str(name), y)
+        np.save(pd_path + "/" + str(name), pd)
+        np.save(is_path + "/" + str(name), is_)
