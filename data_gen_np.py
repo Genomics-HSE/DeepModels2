@@ -7,8 +7,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-RHO_HUMAN = 1.6*10e-9
-MU_HUMAN = 1.25*10e-8
+RHO_HUMAN = 1.6*10e-9 * 100
+MU_HUMAN = 1.25*10e-8 * 100
 RHO_LIMIT = (log(RHO_HUMAN)-100, log(RHO_HUMAN)+100)
 MU_LIMIT = (log(MU_HUMAN)-100, log(MU_HUMAN)+100)
 
@@ -84,8 +84,8 @@ def give_mu() -> float:
 
 class arg:
     Ne = 1.0
-    rho = 1.6*10e-9
-    mu = 1.25*10e-8
+    rho = RHO_HUMAN
+    mu = MU_HUMAN
     num_repl = int(float(sys.argv[2]))
     l = int(float(sys.argv[3]))
     ratio_train_examples = 0.9
