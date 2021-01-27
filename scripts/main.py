@@ -30,7 +30,8 @@ def lightning_train(trainer: pl.Trainer,
     return trainer, model, exp_key
 
 
-def lightning_test(model: pl.LightningModule,
+def lightning_test(trainer: pl.Trainer,
+                   model: pl.LightningModule,
                    checkpoint_path: str,
                    datamodule: pl.LightningDataModule,
                    experiment_key: str,
@@ -40,7 +41,7 @@ def lightning_test(model: pl.LightningModule,
         logger = CometLightningLogger(experiment_key=experiment_key,
                                       experiment_name=model.name)
     
-    trainer = pl.Trainer(logger=logger)
+    # trainer = pl.Trainer(logger=logger)
     model = model.load_from_checkpoint(checkpoint_path=checkpoint_path)
     
     datamodule.setup('test')
@@ -52,7 +53,8 @@ def lightning_test(model: pl.LightningModule,
 
 if __name__ == '__main__':
     import argparse
-    from parser_args import gru_add_arguments, conv_bert_add_arguments, bert_add_arguments, conv_add_arguments, \
+    from parser_args import gru_add_arguments, gru_fg_add_arguments, conv_bert_add_arguments, bert_add_arguments, \
+        conv_add_arguments, \
         gru_one_dir_add_arguments, conv_gru_add_arguments
     
     parser = argparse.ArgumentParser(prog='Genomics')
@@ -65,9 +67,10 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=str, default='output/', help='root directory to write various statistics to')
     parser.add_argument('--device', type=str, default='cpu', help='device in torch format')
     parser.add_argument('--logger', type=str, choices=['local', 'comet'], default='local')
-    parser.add_argument('--project', type=str, default=None, help='project name for comet logger, None by default')
-    parser.add_argument('--workspace', type=str, default=None, help='workspace for comet logger, None by default')
-    parser.add_argument('--offline', type=boolean_string, default=True, help='logger mode')
+    parser.add_argument('--cmt_project', type=str, default=None, help='project name for comet logger, None by default')
+    parser.add_argument('--cmt_workspace', type=str, default=None, help='workspace for comet logger, None by default')
+    parser.add_argument('--cmt_offline', type=boolean_string, default=True, help='logger mode')
+    parser.add_argument('--cmt_disabled', type=boolean_string, default=True)
     parser.add_argument('--quiet', type=boolean_string, default=False)
     parser.add_argument('--seq_len', type=int, default=1)
     parser.add_argument('--padding', type=int, default=0)
@@ -92,12 +95,14 @@ if __name__ == '__main__':
     model_parsers = parser.add_subparsers(title='models', description='model to choose', dest='model')
     
     gru_parser = model_parsers.add_parser('gru')
-    conv_gru_parser = model_parsers.add_parser('conv-gru')
+    gru_fg_parser = model_parsers.add_parser('gru_fg')
+    conv_gru_parser = model_parsers.add_parser('conv_gru')
     conv_parser = model_parsers.add_parser('conv')
     bert_parser = model_parsers.add_parser('bert')
-    conv_bert_parser = model_parsers.add_parser('conv-bert')
+    conv_bert_parser = model_parsers.add_parser('conv_bert')
     
     gru_add_arguments(gru_parser)
+    gru_fg_add_arguments(gru_fg_parser)
     conv_gru_add_arguments(conv_gru_parser)
     conv_add_arguments(conv_parser)
     bert_add_arguments(bert_parser)
@@ -105,7 +110,7 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     print(args)
-    
+    print(available.models)
     model = available.models[args.model].Model(args)
     
     model_root, = ensure_directories(args.output, 'models/')
@@ -116,13 +121,13 @@ if __name__ == '__main__':
         '{model}.pt'.format(model=model.name)
     )
     
-    comet_logger = CometLightningLogger(workspace=args.workspace,
-                                        project_name=args.project,
+    comet_logger = CometLightningLogger(workspace=args.cmt_workspace,
+                                        project_name=args.cmt_project,
                                         save_dir=args.output,
-                                        offline=args.offline,
+                                        offline=args.cmt_offline,
                                         parse_args=False,
                                         auto_metric_logging=False,
-                                        disabled=False,
+                                        disabled=args.cmt_disabled,
                                         experiment_name=model.name
                                         )
     
@@ -132,6 +137,7 @@ if __name__ == '__main__':
                          auto_lr_find=args.auto_lr_find,
                          checkpoint_callback=False,
                          gpus=0 if args.device == 'cpu' else 1,
+                         truncated_bptt_steps=None if args.truncated_bptt_steps == -1 else args.truncated_bptt_steps
                          )
     
     datamodule = DatasetPL(path=args.data,
@@ -142,6 +148,7 @@ if __name__ == '__main__':
                            one_side_padding=args.padding,
                            seq_len=args.seq_len,
                            batch_size=args.batch_size,
+                           n_output=args.n_output,
                            shuffle=args.shuffle,
                            num_workers=args.num_workers)
     
@@ -152,14 +159,16 @@ if __name__ == '__main__':
                                                   checkpoint_path=checkpoint_path,
                                                   resume=args.resume
                                                   )
-        lightning_test(model=model,
+        lightning_test(trainer=trainer,
+                       model=model,
                        checkpoint_path=checkpoint_path,
                        datamodule=datamodule,
                        experiment_key="",
                        logger=comet_logger,
                        )
     elif args.action == 'test':
-        lightning_test(model=model,
+        lightning_test(trainer=trainer,
+                       model=model,
                        checkpoint_path=checkpoint_path,
                        datamodule=datamodule,
                        experiment_key=args.exp_key,

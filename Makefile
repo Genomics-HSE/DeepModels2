@@ -10,9 +10,9 @@ OUTPUT = output/
 SEED = 42
 BATCH_SIZE = 8
 LOGGER = local
-PROJECT = population-genomics-new
-WORKSPACE = kenenbek
-OFFLINE = True
+cmt_project = population-genomics-new
+cmt_workspace = kenenbek
+cmt_offline = True
 RESUME = False
 exp_key = ""
 
@@ -21,7 +21,7 @@ n_token_in=2
 input_size=1
 N_CLASS=20
 lr=0.001
-auto_lr_find=True
+auto_lr_find=False
 shuffle=False
 
 tr_file_first=0
@@ -35,16 +35,18 @@ ifdef FAST_RUN
 	N_EPOCHS=1
 	DEVICE=cpu
 	NUM_WORKERS=1
+	cmt_disabled=True
 else
 	SEQ_LEN=5000
 	N_EPOCHS=50
 	DEVICE=cuda
 	NUM_WORKERS=8
+	cmt_disabled=False
 endif
 
 launcher = python scripts/main.py \
-		  --device=$(DEVICE) --data=$(DATA) --output=$(OUTPUT) --logger=$(LOGGER) --offline=$(OFFLINE) \
-		  --project $(PROJECT) --workspace $(WORKSPACE) \
+		  --device=$(DEVICE) --data=$(DATA) --output=$(OUTPUT) --logger=$(LOGGER) --cmt_offline=$(cmt_offline) \
+		  --cmt_project=$(cmt_project) --cmt_workspace=$(cmt_workspace) --cmt_disabled=$(cmt_disabled) \
 		  --seq_len=$(SEQ_LEN) --padding=$(padding) --n_output=$(N_CLASS) --input_size=$(input_size) \
 		  --n_token_in=$(n_token_in) \
 		  --tr_file_first=$(tr_file_first) --tr_file_last=$(tr_file_last) --te_file_first=$(te_file_first) \
@@ -60,28 +62,55 @@ train = $(launcher) \
 test = $(launcher) \
 		--action=test --exp_key=$(exp_key)
 
-########################
-#    GRU               #
-########################
+##################################################################
+#    						GRU                                  #
+##################################################################
 
 gru: gru-train gru-test
 
+ifdef FAST_RUN
+gru-vars = hidden_size=10 \
+			   num_layers=2 \
+			   batch_first=True \
+			   bidirectional=True \
+			   dropout=0.1 \
+			   truncated_bptt_steps=10
+else
 gru-vars = hidden_size=256 \
-		   num_layers=2 \
-           batch_first=True \
-           bidirectional=True \
-           dropout=0.1
+			   num_layers=2 \
+			   batch_first=True \
+			   bidirectional=True \
+			   dropout=0.1 \
+			   truncated_bptt_steps=10000
+endif
 
-$(call assign-vars, gru-train gru-test, $(gru-vars))
+$(call assign-vars, gru-train gru-test\
+					gru-fg-train gru-fg-test\
+ 					gru-print-args, $(gru-vars))
 
 gru-args = --hidden_size=$(hidden_size) --num_layers=$(num_layers) \
-           --batch_first=$(batch_first) --bidirectional=$(bidirectional) --dropout=$(dropout)
+           --batch_first=$(batch_first) --bidirectional=$(bidirectional) --dropout=$(dropout) \
+           --truncated_bptt_steps=$(truncated_bptt_steps)
 
 gru-train:
 	$(train) gru $(gru-args)
 
 gru-test:
 	$(test) gru $(gru-args)
+
+gru-print-args:
+	echo $(gru-args)
+
+
+##################################################################
+#    			Truncated BPTT GRU                               #
+##################################################################
+
+gru-fg-train:
+	$(train) gru_fg $(gru-args)
+
+gru-fg-test:
+	$(test) gru_fg $(gru-args)
 
 ########################
 #    Recurrent MODEL   #
