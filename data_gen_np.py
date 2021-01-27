@@ -22,8 +22,8 @@ LAMBDA_EXP = 1.0
 POPULATION_LIMITS = (250, 100000)
 POPULATION = 5000
 
-N = 20
-#N = int(sys.argv[4])
+# N = 20
+N = int(sys.argv[4])
 
 RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
@@ -89,10 +89,10 @@ class arg:
     Ne = 1.0
     rho = RHO_HUMAN
     mu = MU_HUMAN
-    num_repl = 1
-    l = 300
-    #num_repl = int(float(sys.argv[2]))
-    #l = int(float(sys.argv[3]))
+    # num_repl = 1
+    # l = 300
+    num_repl = int(float(sys.argv[2]))
+    l = int(float(sys.argv[3]))
     ratio_train_examples = 0.9
     random_seed = 42
     model = "hudson"
