@@ -3,6 +3,10 @@ from typing import Any
 import torch
 import pytorch_lightning as pl
 
+__all__ = [
+    'LightningModuleExtended'
+]
+
 
 class LightningModuleExtended(pl.LightningModule):
     def __init__(self):
@@ -10,13 +14,14 @@ class LightningModuleExtended(pl.LightningModule):
         self.loss = torch.nn.KLDivLoss(reduction='batchmean')
         # self.example_input_array = torch.LongTensor(1, 10).random_(0, 2)
         self.lr = 0.001
-
-    def training_step(self, batch, batch_ix):
+    
+    def training_step(self, batch, batch_ix, *args):
         X_batch, y_batch = batch
-        logits = self.forward(X_batch)
+        hiddens = args[0] if len(args) > 0 else None
+        logits, hiddens = self.forward(X_batch, hiddens)
         y_one_hot = one_hot_encoding(y_batch, self.n_output, device=self.device)
         loss = self.loss(logits, y_one_hot)
-        result = pl.TrainResult(minimize=loss)
+        result = pl.TrainResult(minimize=loss, hiddens=hiddens)
         result.log("train_loss", loss, on_step=True, on_epoch=True)
         return result
     
@@ -26,16 +31,16 @@ class LightningModuleExtended(pl.LightningModule):
     
     def test_step(self, batch, batch_idx) -> Any:
         X_batch, y_batch = batch
-        logits = self.forward(X_batch)
+        logits, _ = self.forward(X_batch, None)
         preds = torch.exp(logits)
         preds = torch.flatten(preds, start_dim=0, end_dim=1)
-
+        
         # y_batch = torch.argmax(y_batch, dim=-1)
         y = y_batch.flatten()
         
         preds = preds.cpu().detach()
         self.logger.log_coalescent_heatmap(self.name, [preds.T, y.T], batch_idx)
-        
+    
     def save(self, trainer: pl.Trainer, parameters_path: str):
         if os.environ.get("FAST_RUN") is None or not os.path.exists(parameters_path):
             print('saving to {parameters_path}'.format(parameters_path=parameters_path))

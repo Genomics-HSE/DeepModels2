@@ -7,6 +7,11 @@ def gru_add_arguments(parser):
     parser.add_argument('--batch_first', type=boolean_string, default=True)
     parser.add_argument('--bidirectional', type=boolean_string, default=True)
     parser.add_argument('--dropout', type=float, default=0.2)
+    parser.add_argument('--truncated_bptt_steps', type=int, default=-1)
+
+
+def gru_fg_add_arguments(parser):
+    gru_add_arguments(parser)
 
 
 def conv_gru_add_arguments(parser):

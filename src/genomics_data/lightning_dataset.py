@@ -19,8 +19,10 @@ class DatasetPL(pl.LightningDataModule):
                  one_side_padding: int,
                  seq_len: int,
                  batch_size: int,
+                 n_output: int,
                  shuffle: bool,
-                 num_workers: int):
+                 num_workers: int,
+                 use_distance: bool = False):
         super(DatasetPL, self).__init__()
         self.path = path
         
@@ -28,9 +30,11 @@ class DatasetPL(pl.LightningDataModule):
         self.tr_file_last = tr_file_last
         self.te_file_first = te_file_first
         self.te_file_last = te_file_last
+        self.use_distance = use_distance  # use distance instead of snp
         
         self.one_side_padding = one_side_padding
         self.seq_len = seq_len
+        self.n_output = n_output
         
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -45,25 +49,31 @@ class DatasetPL(pl.LightningDataModule):
             if os.environ.get("FAST_RUN") is not None:
                 self.train_dataset = MockDataset(batch_size=self.batch_size,
                                                  seq_len=self.seq_len,
-                                                 one_side_padding=self.one_side_padding)
+                                                 one_side_padding=self.one_side_padding,
+                                                 n_classes=self.n_output,
+                                                 use_distance=use_distance)
             else:
                 self.train_dataset = DatasetTorch(path=self.path,
                                                   file_first=self.tr_file_first,
                                                   file_last=self.tr_file_last,
                                                   one_side_padding=self.one_side_padding,
-                                                  seq_len=self.seq_len)
+                                                  seq_len=self.seq_len,
+                                                  use_distance=use_distance)
         
         if stage == 'test' or stage is None:
             if os.environ.get("FAST_RUN") is not None:
                 self.test_dataset = MockDataset(batch_size=self.batch_size,
                                                 seq_len=self.seq_len,
-                                                one_side_padding=self.one_side_padding)
+                                                one_side_padding=self.one_side_padding,
+                                                n_classes=self.n_output,
+                                                use_distance=use_distance)
             else:
                 self.test_dataset = DatasetTorch(path=self.path,
                                                  file_first=self.te_file_first,
                                                  file_last=self.te_file_last,
                                                  one_side_padding=self.one_side_padding,
-                                                 seq_len=self.seq_len)
+                                                 seq_len=self.seq_len,
+                                                 use_distance=use_distance)
     
     def train_dataloader(self, *args, **kwargs) -> DataLoader:
         return DataLoader(self.train_dataset,
@@ -81,7 +91,8 @@ class DatasetPL(pl.LightningDataModule):
 
 
 class DatasetTorch(data.Dataset):
-    def __init__(self, path, file_first, file_last, one_side_padding, seq_len):
+    def __init__(self, path, file_first, file_last, one_side_padding, seq_len, use_distance=False,
+                 split_to_batch=False, distance_arr_len=0):
         """
         :param path: a common path to `X` and `y` folder.
         :param file_first:
@@ -102,11 +113,19 @@ class DatasetTorch(data.Dataset):
         for filename in data_filenames:
             X_file_path = os.path.join(X_path, filename)
             y_file_path = os.path.join(y_path, filename)
-            X_seq_padded_tr, y_seq_tr = load_with_padding_X_y(X_file_path, y_file_path, one_side_padding)
-            X_data_i, y_data_i = batchify(X_seq_padded_tr, y_seq_tr, seq_len, one_side_padding)
+            X_seq_padded_full, y_seq_full = load_with_padding_X_y(X_file_path, y_file_path, one_side_padding)
+            if split_to_batch:
+                X_seq_padded_full, y_seq_full = batchify(X_seq_padded_full, y_seq_full, seq_len, one_side_padding)
             # y_data_i_one_hot = one_hot_encoding_numpy(y_data_i, 20)
-            X_data_res.append(X_data_i)
-            y_data_res.append(y_data_i)
+            if use_distance:
+                X_seq_padded_full = convert_snp_to_distances(X_seq_padded_full)
+                if len(X_seq_padded_full) > distance_arr_len:
+                    X_seq_padded_full = X_seq_padded_full[:distance_arr_len]
+                else:
+                    X_seq_padded_full = add_zeros_at_end(X_seq_padded_full, distance_arr_len)
+            
+            X_data_res.append(X_seq_padded_full)
+            y_data_res.append(y_seq_full)
         
         self.X_data = np.vstack(X_data_res)
         self.y_data = np.vstack(y_data_res)
@@ -122,13 +141,13 @@ class DatasetTorch(data.Dataset):
 
 
 class MockDataset(data.Dataset):
-    def __init__(self, batch_size: int, seq_len: int, one_side_padding: int):
+    def __init__(self, batch_size: int, seq_len: int, one_side_padding: int,
+                 n_classes: int):
         super(MockDataset, self).__init__()
         n_batches = 40
         n_samples = n_batches * batch_size
         self.X_data = torch.LongTensor(n_samples, seq_len + 2 * one_side_padding).random_(0, 2)
-        y_data = np.random.randint(low=0, high=20, size=(n_samples, seq_len))
-        self.y_data = one_hot_encoding_numpy(y_data, 20)
+        self.y_data = np.random.randint(low=0, high=n_classes, size=(n_samples, seq_len))
     
     def __len__(self):
         """
@@ -147,3 +166,29 @@ def one_hot_encoding_numpy(y_data, num_class):
     :return:
     """
     return (np.arange(num_class) == y_data[..., None]).astype(np.float32)
+
+
+def convert_snp_to_distances(single_genome):
+    """
+    
+    :param single_genome:
+    :return:
+    """
+    indices = np.where(single_genome == 1)[0]
+    distances = np.diff(indices) - 1
+    
+    return distances
+
+def add_zeros_at_end(X_seq_distances, desired_length):
+    """
+    :param X_seq_distances: np array of int
+    :return:
+    """
+    add_len = len(X_seq_distances) - desired_length
+    X_seq_dist_padded = np.pad(
+        X_seq_distances,
+        pad_width=(0, add_len),
+        mode='constant',
+        constant_values=-1
+    )
+    return X_seq_dist_padded
