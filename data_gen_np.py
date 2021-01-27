@@ -1,5 +1,7 @@
 import os
 import sys
+import json
+import time as tl
 from math import (exp, log)
 
 import msprime
@@ -20,7 +22,8 @@ LAMBDA_EXP = 1.0
 POPULATION_LIMITS = (250, 100000)
 POPULATION = 5000
 
-N = int(sys.argv[4])
+N = 20
+#N = int(sys.argv[4])
 
 RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
@@ -86,8 +89,10 @@ class arg:
     Ne = 1.0
     rho = RHO_HUMAN
     mu = MU_HUMAN
-    num_repl = int(float(sys.argv[2]))
-    l = int(float(sys.argv[3]))
+    num_repl = 1
+    l = 300
+    #num_repl = int(float(sys.argv[2]))
+    #l = int(float(sys.argv[3]))
     ratio_train_examples = 0.9
     random_seed = 42
     model = "hudson"
@@ -150,6 +155,11 @@ class Generator:
         def to_T(time):
             return round((np.log(time)-a)/B)
         
+        step_of_discratization = max_t/N
+
+        def discretization(t):
+            return min(int(t/step_of_discratization) + 1, self.N)
+        
         d_times = [to_T(t) for t in coal_times]
         
         prioty_distribution = [0.0 for i in range(N+1)]
@@ -159,6 +169,25 @@ class Generator:
                                 for p in prioty_distribution]
 
         intervals_starts = [np.e**(B*i+a) for i in range(N)]
+        
+        main_data = {
+            'random_seed': RANDOM_SEED,
+            'prioty_distribution': prioty_distribution,
+            'intervals_starts': intervals_starts,
+            'recombination_rate': self.arg.rho,
+            'sample_size': self.arg.sample_size,
+            'matation_rate': self.arg.mu,
+            'num_replicates': self.arg.num_repl,
+            # 'demographic_events': self.demographic_events,
+            'model': self.arg.model,
+            'len': self.arg.l,
+            'N': N
+        }
+        
+        json_object = json.dumps(main_data, indent = 4) 
+        with open(f"{RANDOM_SEED}_{tl.time()}s_exp_info.json", "w+") as outfile: 
+            outfile.write(json_object) 
+        
         
         return haplotype, d_times, recombination_points, prioty_distribution, intervals_starts
 
