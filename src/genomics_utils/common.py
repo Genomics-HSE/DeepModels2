@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 __all__ = [
-    'ensure_directories', 'boolean_string'
+    'ensure_directories', 'boolean_string', 'float_to_int'
 ]
 
 
@@ -23,3 +23,6 @@ def boolean_string(s):
     if s not in {'False', 'True'}:
         raise ValueError('Not a valid boolean string')
     return s == 'True'
+
+def float_to_int(f):
+    return int(f)

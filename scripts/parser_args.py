@@ -23,12 +23,12 @@ def conv_gru_add_arguments(parser):
     
 
 def conv_add_arguments(parser):
-    parser.add_argument('--hidden_size_conv', type=int)
-    parser.add_argument('--emb_size_conv', type=int)
-    parser.add_argument('--kernel_size', type=int)
-    parser.add_argument('--n_layers_conv', type=int)
-    parser.add_argument('--dropout_conv', type=float)
-    parser.add_argument('--scale_conv', type=int)
+    parser.add_argument('--channel_size', type=int)
+    parser.add_argument('--conv_kernel_size', type=int)
+    parser.add_argument('--conv_stride', type=int)
+    parser.add_argument('--num_layers', type=int)
+    parser.add_argument('--dropout_p', type=float)
+    parser.add_argument('--pool_kernel_size', type=int)
 
 
 def bert_add_arguments(parser):

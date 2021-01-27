@@ -15,13 +15,12 @@ class LightningModuleExtended(pl.LightningModule):
         # self.example_input_array = torch.LongTensor(1, 10).random_(0, 2)
         self.lr = 0.001
     
-    def training_step(self, batch, batch_ix, *args):
+    def training_step(self, batch, batch_ix):
         X_batch, y_batch = batch
-        hiddens = args[0] if len(args) > 0 else None
-        logits, hiddens = self.forward(X_batch, hiddens)
-        y_one_hot = one_hot_encoding(y_batch, self.n_output, device=self.device)
-        loss = self.loss(logits, y_one_hot)
-        result = pl.TrainResult(minimize=loss, hiddens=hiddens)
+        logits = self.forward(X_batch)
+        # y_one_hot = one_hot_encoding(y_batch, self.n_output, device=self.device)
+        loss = self.loss(logits, y_batch)
+        result = pl.TrainResult(minimize=loss)
         result.log("train_loss", loss, on_step=True, on_epoch=True)
         return result
     
@@ -31,7 +30,7 @@ class LightningModuleExtended(pl.LightningModule):
     
     def test_step(self, batch, batch_idx) -> Any:
         X_batch, y_batch = batch
-        logits, _ = self.forward(X_batch, None)
+        logits = self.forward(X_batch)
         preds = torch.exp(logits)
         preds = torch.flatten(preds, start_dim=0, end_dim=1)
         

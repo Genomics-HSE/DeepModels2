@@ -1,5 +1,4 @@
-import genomics_models
-import genomics_data
+import squeeze_models
 
 __all__ = [
     'models',
@@ -7,8 +6,8 @@ __all__ = [
 ]
 
 models = {
-    attr: getattr(genomics_models, attr)
-    for attr in genomics_models.__all__
+    attr: getattr(squeeze_models, attr)
+    for attr in squeeze_models.__all__
 }
 
 

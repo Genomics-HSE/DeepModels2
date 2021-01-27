@@ -136,8 +136,8 @@ def load_with_padding_X_y(X_file_path: str, y_file_path: str, one_side_padding: 
             pad_width=(one_side_padding,),
             mode='constant',
             constant_values=(-1,)
-        )
-        y_seq = np.load(y_file_path, mmap_mode=mmap)
+        ).astype('float32')
+        y_seq = np.load(y_file_path, mmap_mode=mmap).astype('float32')
     elif X_file_path.endswith(".pt") and y_file_path.endswith(".pt"):
         X_seq = F.pad(
             input=torch.load(X_file_path),

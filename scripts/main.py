@@ -4,8 +4,8 @@ import os
 
 import pytorch_lightning as pl
 
-from genomics_data import RandomDataIteratorOneSeq, SequentialDataIterator, DatasetPL
-from genomics_utils import available, ensure_directories, boolean_string
+from genomics_data import DatasetPL
+from genomics_utils import available, ensure_directories, boolean_string, float_to_int
 from genomics_utils import CometLightningLogger, ExistingCometLightningLogger
 
 
@@ -72,7 +72,10 @@ if __name__ == '__main__':
     parser.add_argument('--cmt_offline', type=boolean_string, default=True, help='logger mode')
     parser.add_argument('--cmt_disabled', type=boolean_string, default=True)
     parser.add_argument('--quiet', type=boolean_string, default=False)
-    parser.add_argument('--seq_len', type=int, default=1)
+    
+    parser.add_argument('--sqz', type=boolean_string, default=False)
+    parser.add_argument('--seq_len', type=float_to_int, default=1)
+    parser.add_argument('--sqz_seq_len', type=float_to_int, default=1)
     parser.add_argument('--padding', type=int, default=0)
     parser.add_argument('--input_size', type=int, default=1)
     parser.add_argument('--n_token_in', type=int, default=2)
@@ -117,13 +120,13 @@ if __name__ == '__main__':
     default_root_dir, = ensure_directories(args.output, 'models/{}'.format(model.name))
     
     checkpoint_path = os.path.join(
-        model_root,
+        default_root_dir,
         '{model}.pt'.format(model=model.name)
     )
     
     comet_logger = CometLightningLogger(workspace=args.cmt_workspace,
                                         project_name=args.cmt_project,
-                                        save_dir=args.output,
+                                        save_dir=default_root_dir,
                                         offline=args.cmt_offline,
                                         parse_args=False,
                                         auto_metric_logging=False,
@@ -137,7 +140,7 @@ if __name__ == '__main__':
                          auto_lr_find=args.auto_lr_find,
                          checkpoint_callback=False,
                          gpus=0 if args.device == 'cpu' else 1,
-                         truncated_bptt_steps=None if args.truncated_bptt_steps == -1 else args.truncated_bptt_steps
+                         # truncated_bptt_steps=None if args.truncated_bptt_steps == -1 else args.truncated_bptt_steps
                          )
     
     datamodule = DatasetPL(path=args.data,
@@ -147,10 +150,12 @@ if __name__ == '__main__':
                            te_file_last=args.te_file_last,
                            one_side_padding=args.padding,
                            seq_len=args.seq_len,
+                           sqz_seq_len=args.sqz_seq_len,
                            batch_size=args.batch_size,
                            n_output=args.n_output,
                            shuffle=args.shuffle,
-                           num_workers=args.num_workers)
+                           num_workers=args.num_workers,
+                           use_distance=args.sqz)
     
     if args.action == 'train':
         trainer, model, exp_key = lightning_train(trainer=trainer,
@@ -159,13 +164,13 @@ if __name__ == '__main__':
                                                   checkpoint_path=checkpoint_path,
                                                   resume=args.resume
                                                   )
-        lightning_test(trainer=trainer,
-                       model=model,
-                       checkpoint_path=checkpoint_path,
-                       datamodule=datamodule,
-                       experiment_key="",
-                       logger=comet_logger,
-                       )
+        # lightning_test(trainer=trainer,
+        #                model=model,
+        #                checkpoint_path=checkpoint_path,
+        #                datamodule=datamodule,
+        #                experiment_key="",
+        #                logger=comet_logger,
+        #                )
     elif args.action == 'test':
         lightning_test(trainer=trainer,
                        model=model,
