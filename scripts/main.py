@@ -113,7 +113,6 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     print(args)
-    print(available.models)
     model = available.models[args.model].Model(args)
     
     model_root, = ensure_directories(args.output, 'models/')

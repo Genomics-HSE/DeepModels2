@@ -4,7 +4,6 @@ assign-vars = $(foreach A,$2,$(eval $1: $A))
 
 data = data/len1000-gen20-np
 output = output/
-batch_size = 8
 logger = local
 cmt_project = population-genomics-new
 cmt_workspace = kenenbek
@@ -23,11 +22,6 @@ n_token_in=2
 input_size=1
 n_class=20
 
-tr_file_first=0
-tr_file_last=0
-te_file_first=1
-te_file_last=1
-
 
 ifdef FAST_RUN
 	seq_len=1000
@@ -36,13 +30,25 @@ ifdef FAST_RUN
 	device=cpu
 	num_workers=1
 	cmt_disabled=True
+
+	batch_size=4
+	tr_file_first=0
+    tr_file_last=19
+    te_file_first=20
+    te_file_last=24
 else
 	seq_len=30e6
-	sqz_seq_len=30e4
+	sqz_seq_len=30e5
 	n_epochs=50
 	device=cuda
 	num_workers=8
 	cmt_disabled=False
+
+	batch_size=16
+	tr_file_first=0
+    tr_file_last=0
+    te_file_first=1
+    te_file_last=1
 endif
 
 launcher = python scripts/main.py \
