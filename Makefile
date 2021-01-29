@@ -2,7 +2,6 @@ SHELL=/bin/bash
 assign-vars = $(foreach A,$2,$(eval $1: $A))
 .PHONY: hse-run test_data clean-output
 
-data = data/len1000-gen20-np
 output = output/
 logger = local
 cmt_project = population-genomics-new
@@ -30,6 +29,7 @@ ifdef FAST_RUN
 	device=cpu
 	num_workers=1
 	cmt_disabled=True
+	data = data/len1000-gen20-np
 	batch_size=4
 	tr_file_first=0
     tr_file_last=19
@@ -42,6 +42,7 @@ else
 	device=cuda
 	num_workers=8
 	cmt_disabled=False
+	data = ../len30e6-gen20-np
 	batch_size=16
 	tr_file_first=0
     tr_file_last=149
