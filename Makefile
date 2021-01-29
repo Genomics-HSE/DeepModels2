@@ -30,7 +30,6 @@ ifdef FAST_RUN
 	device=cpu
 	num_workers=1
 	cmt_disabled=True
-
 	batch_size=4
 	tr_file_first=0
     tr_file_last=19
@@ -43,10 +42,9 @@ else
 	device=cuda
 	num_workers=8
 	cmt_disabled=False
-
 	batch_size=16
 	tr_file_first=0
-    tr_file_last=0
+    tr_file_last=149
     te_file_first=1
     te_file_last=1
 endif
