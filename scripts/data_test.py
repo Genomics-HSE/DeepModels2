@@ -12,9 +12,9 @@ def kotok():
     
     PF = 5
     PS = PF
-    
+    conv_pad = (F - 1) / 2
     for i in range(num_layers):
-        W = math.floor(1 + ((W - F) / S))
+        W = math.floor(1 + ((W - F + 2*conv_pad) / S))
         W = math.floor(1 + (W - PF) / PS)
     
     return W

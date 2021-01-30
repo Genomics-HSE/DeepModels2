@@ -39,7 +39,7 @@ class CNNSqueeze(LightningModuleExtended):
         in_out_channels = in_out_channels + [(channel_size, channel_size) for _ in range(num_layers - 2)]
         in_out_channels = in_out_channels + [(channel_size, 1)]
 
-        conv_pad = (conv_kernel_size - 1) / 2
+        conv_pad = 0
         for _ in range(num_layers):
             conv_out_size = math.floor(((sqz_seq_len - conv_kernel_size + 2 * conv_pad) / conv_stride) + 1)
             pool_out_size = math.floor(((conv_out_size - pool_kernel_size) / pool_kernel_size) + 1)
