@@ -32,8 +32,7 @@ def lightning_train(trainer: pl.Trainer,
     return trainer, model, exp_key
 
 
-def lightning_test(trainer: pl.Trainer,
-                   model: pl.LightningModule,
+def lightning_test(model: pl.LightningModule,
                    checkpoint_path: str,
                    test_output: str,
                    datamodule: Union[pl.LightningDataModule, DatasetPL],
@@ -147,15 +146,6 @@ if __name__ == '__main__':
                                         experiment_name=model.name
                                         )
     
-    trainer = pl.Trainer(default_root_dir=default_root_dir,
-                         logger=comet_logger,
-                         max_epochs=args.epochs,
-                         auto_lr_find=args.auto_lr_find,
-                         checkpoint_callback=False,
-                         gpus=0 if args.device == 'cpu' else 1,
-                         # truncated_bptt_steps=None if args.truncated_bptt_steps == -1 else args.truncated_bptt_steps
-                         )
-    
     datamodule = DatasetPL(path=args.data,
                            tr_file_first=args.tr_file_first,
                            tr_file_last=args.tr_file_last,
@@ -171,6 +161,15 @@ if __name__ == '__main__':
                            use_distance=args.sqz)
     
     if args.action == 'train':
+        trainer = pl.Trainer(default_root_dir=default_root_dir,
+                             logger=comet_logger,
+                             max_epochs=args.epochs,
+                             auto_lr_find=args.auto_lr_find,
+                             checkpoint_callback=False,
+                             gpus=0 if args.device == 'cpu' else 1,
+                             # truncated_bptt_steps=None if args.truncated_bptt_steps == -1 else args.truncated_bptt_steps
+                             )
+        
         trainer, model, exp_key = lightning_train(trainer=trainer,
                                                   model=model,
                                                   data_module=datamodule,
@@ -185,8 +184,7 @@ if __name__ == '__main__':
         #                logger=comet_logger,
         #                )
     elif args.action == 'test':
-        lightning_test(trainer=trainer,
-                       model=model,
+        lightning_test(model=model,
                        checkpoint_path=args.checkpoint_path,
                        test_output=test_output,
                        datamodule=datamodule,
