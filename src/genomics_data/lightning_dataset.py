@@ -181,7 +181,7 @@ def convert_snp_to_distances(single_genome):
     indices = np.where(single_genome == 1)[0]
     distances = np.diff(indices) - 1
     
-    return distances
+    return distances.astype('float32')
 
 
 def add_zeros_at_end(X_seq_distances, desired_length):

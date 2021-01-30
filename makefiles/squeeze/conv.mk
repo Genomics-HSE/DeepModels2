@@ -10,7 +10,7 @@ conv: conv-train conv-test
 
 ifdef FAST_RUN
 conv-vars = channel_size=10 \
-			conv_kernel_size=20 \
+			conv_kernel_size=21 \
 			conv_stride=1 \
 			num_layers=2 \
 			dropout_p=0.1 \
