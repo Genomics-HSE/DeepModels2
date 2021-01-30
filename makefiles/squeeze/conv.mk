@@ -1,4 +1,5 @@
 .PHONY: conv conv-train conv-train
+model-path := $(MAKEFILE_LIST)
 include Makefile
 
 #####################################################################
