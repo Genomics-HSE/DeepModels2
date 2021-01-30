@@ -53,7 +53,7 @@ endif
 launcher = python scripts/main.py \
 		  --device=$(device) --data=$(data) --output=$(output) --logger=$(logger) --cmt_offline=$(cmt_offline) \
 		  --cmt_project=$(cmt_project) --cmt_workspace=$(cmt_workspace) --cmt_disabled=$(cmt_disabled) \
-		  --seq_len=$(seq_len) --sqz_seq_len=$(sqz_seq_len) --n_output=$(n_class) --input_size=$(input_size) \
+		  --sqz=$(sqz) --seq_len=$(seq_len) --sqz_seq_len=$(sqz_seq_len) --n_output=$(n_class) --input_size=$(input_size) \
 		  --n_token_in=$(n_token_in) --padding=$(padding) \
 		  --tr_file_first=$(tr_file_first) --tr_file_last=$(tr_file_last) --te_file_first=$(te_file_first) \
 		  --te_file_last=$(te_file_last) \
