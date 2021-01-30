@@ -55,3 +55,18 @@ def one_hot_encoding(y_data, num_class, device):
     y_one_hot.zero_()
     y_one_hot.scatter_(2, y_data.unsqueeze(2), 1)
     return y_one_hot
+
+
+
+    #
+    # def test_step(self, batch, batch_idx) -> Any:
+    #     X_batch, y_batch = batch
+    #     logits = self.forward(X_batch)
+    #     preds = torch.exp(logits)
+    #     preds = torch.flatten(preds, start_dim=0, end_dim=1)
+    #
+    #     # y_batch = torch.argmax(y_batch, dim=-1)
+    #     y = y_batch.flatten()
+    #
+    #     preds = preds.cpu().detach()
+    #     self.logger.log_coalescent_heatmap(self.name, [preds.T, y.T], batch_idx)

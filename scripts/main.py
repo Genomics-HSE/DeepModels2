@@ -1,7 +1,9 @@
 import comet_ml
-from typing import Any
+from typing import Any, Union
 import os
 
+import numpy as np
+import torch
 import pytorch_lightning as pl
 
 from genomics_data import DatasetPL
@@ -33,7 +35,8 @@ def lightning_train(trainer: pl.Trainer,
 def lightning_test(trainer: pl.Trainer,
                    model: pl.LightningModule,
                    checkpoint_path: str,
-                   datamodule: pl.LightningDataModule,
+                   test_output: str,
+                   datamodule: Union[pl.LightningDataModule, DatasetPL],
                    experiment_key: str,
                    logger: Any
                    ):
@@ -45,9 +48,18 @@ def lightning_test(trainer: pl.Trainer,
     model = model.load_from_checkpoint(checkpoint_path=checkpoint_path)
     
     datamodule.setup('test')
-    trainer.test(model=model,
-                 datamodule=datamodule)
-    
+    ix_to_filename = datamodule.test_dataset.ix_to_filename
+    with torch.no_grad():
+        for i, (genome, target_weights) in enumerate(datamodule.test_dataset):
+            genome = torch.from_numpy(genome)
+            genome = genome.unsqueeze(0)
+            weights = model(genome)
+            weights = weights.squeeze()
+        
+            # write to file
+            filename = ix_to_filename[i]
+            np.save(os.path.join(test_output, filename), weights)
+        
     return
 
 
@@ -62,6 +74,7 @@ if __name__ == '__main__':
         '--data', type=str, default='data/micro_data/',
         help='directory from which data is read or to which data will be downloaded if absent, '
     )
+    parser.add_argument('--checkpoint_path', type=str, default="")
     parser.add_argument('--resume', type=boolean_string, default=False)
     parser.add_argument('--exp_key', type=str, default="")
     parser.add_argument('--output', type=str, default='output/', help='root directory to write various statistics to')
@@ -116,6 +129,7 @@ if __name__ == '__main__':
     model = available.models[args.model].Model(args)
     
     model_root, = ensure_directories(args.output, 'models/')
+    test_output, = ensure_directories(args.data, "{}".format(model.name))
     default_root_dir, = ensure_directories(args.output, 'models/{}'.format(model.name))
     
     checkpoint_path = os.path.join(
@@ -173,7 +187,8 @@ if __name__ == '__main__':
     elif args.action == 'test':
         lightning_test(trainer=trainer,
                        model=model,
-                       checkpoint_path=checkpoint_path,
+                       checkpoint_path=args.checkpoint_path,
+                       test_output=test_output,
                        datamodule=datamodule,
                        experiment_key=args.exp_key,
                        logger=comet_logger

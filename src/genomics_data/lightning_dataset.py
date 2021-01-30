@@ -88,7 +88,7 @@ class DatasetPL(pl.LightningDataModule):
     
     def test_dataloader(self, *args, **kwargs) -> Union[DataLoader, List[DataLoader]]:
         return DataLoader(self.test_dataset,
-                          batch_size=self.batch_size,
+                          batch_size=1,
                           shuffle=self.shuffle,
                           num_workers=self.num_workers,
                           )
@@ -114,7 +114,9 @@ class DatasetTorch(data.Dataset):
         X_data_res = []
         y_data_res = []
         
-        for filename in data_filenames:
+        self.ix_to_filename = {}
+        
+        for ix, filename in enumerate(data_filenames):
             X_file_path = os.path.join(X_path, filename)
             y_file_path = os.path.join(y_path, filename)
             X_seq_padded_full, y_seq_full = load_with_padding_X_y(X_file_path, y_file_path, one_side_padding)
@@ -130,6 +132,7 @@ class DatasetTorch(data.Dataset):
             
             X_data_res.append(X_seq_padded_full)
             y_data_res.append(y_seq_full)
+            self.ix_to_filename[ix] = filename
         
         self.X_data = np.vstack(X_data_res)
         self.y_data = np.vstack(y_data_res)

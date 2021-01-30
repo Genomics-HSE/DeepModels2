@@ -3,6 +3,7 @@ assign-vars = $(foreach A,$2,$(eval $1: $A))
 .PHONY: hse-run test_data clean-output
 
 output = output/
+checkpoint_path =
 logger = local
 cmt_project = population-genomics-new
 cmt_workspace = kenenbek
@@ -46,8 +47,8 @@ else
 	batch_size=16
 	tr_file_first=0
     tr_file_last=149
-    te_file_first=1
-    te_file_last=1
+    te_file_first=150
+    te_file_last=199
 endif
 
 launcher = python scripts/main.py \
@@ -66,7 +67,7 @@ train = $(launcher) \
 
 
 test = $(launcher) \
-		--action=test --exp_key=$(exp_key)
+		--action=test --exp_key=$(exp_key) --checkpoint_path=$(checkpoint_path)
 
 test_data:
 	@python scripts/data_test.py $(DATA_PATH)
