@@ -123,7 +123,7 @@ class DatasetTorch(data.Dataset):
             # y_data_i_one_hot = one_hot_encoding_numpy(y_data_i, 20)
             if use_distance:
                 X_seq_padded_full = convert_snp_to_distances(X_seq_padded_full)
-                if len(X_seq_padded_full) > sqz_seq_len:
+                if len(X_seq_padded_full) >= sqz_seq_len:
                     X_seq_padded_full = X_seq_padded_full[:sqz_seq_len]
                 else:
                     X_seq_padded_full = add_zeros_at_end(X_seq_padded_full, sqz_seq_len)
@@ -189,7 +189,7 @@ def add_zeros_at_end(X_seq_distances, desired_length):
     :param X_seq_distances: np array of int
     :return:
     """
-    add_len = len(X_seq_distances) - desired_length
+    add_len = desired_length - len(X_seq_distances)
     X_seq_dist_padded = np.pad(
         X_seq_distances,
         pad_width=(0, add_len),
