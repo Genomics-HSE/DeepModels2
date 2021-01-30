@@ -25,4 +25,4 @@ def boolean_string(s):
     return s == 'True'
 
 def float_to_int(f):
-    return int(f)
+    return int(float(f))
