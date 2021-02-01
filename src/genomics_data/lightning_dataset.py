@@ -134,7 +134,9 @@ class DatasetTorch(data.Dataset):
             y_data_res.append(y_seq_full)
             self.ix_to_filename[ix] = filename
         
-        self.X_data = np.vstack(X_data_res)
+        # X_data batch_size, seq_len, 1
+        self.X_data = np.expand_dims(np.vstack(X_data_res), axis=2)
+        print(self.X_data.shape)
         self.y_data = np.vstack(y_data_res)
     
     def __len__(self):

@@ -63,7 +63,7 @@ class CNNSqueeze(LightningModuleExtended):
         :param input: (batch_size, seq_len)
         :return:
         """
-        input = input.unsqueeze(1)
+        input = input.permute(0, 2, 1)
         # (batch_size, 1, seq_len)
         # begin convolutional blocks...
         for i, conv in enumerate(self.convs):

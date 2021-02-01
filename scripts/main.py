@@ -167,7 +167,7 @@ if __name__ == '__main__':
                              auto_lr_find=args.auto_lr_find,
                              checkpoint_callback=False,
                              gpus=0 if args.device == 'cpu' else 1,
-                             # truncated_bptt_steps=None if args.truncated_bptt_steps == -1 else args.truncated_bptt_steps
+                             truncated_bptt_steps=None # if not hasattr(args, "truncated_bptt_steps") else args.truncated_bptt_steps
                              )
         
         trainer, model, exp_key = lightning_train(trainer=trainer,
