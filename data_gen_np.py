@@ -11,8 +11,8 @@ from tqdm import tqdm
 
 RHO_HUMAN = 1.6*10e-9 * 100
 MU_HUMAN = 1.25*10e-8 * 100
-RHO_LIMIT = (log(RHO_HUMAN)-100, log(RHO_HUMAN)+100)
-MU_LIMIT = (log(MU_HUMAN)-100, log(MU_HUMAN)+100)
+RHO_LIMIT = (1.6*10e-8, 1.6*10e-10)
+MU_LIMIT = (1.25*10e-9, 1.25*10e-7)
 
 LENGTH_NORMALIZE_CONST = 4
 ZIPPED = False
@@ -60,7 +60,7 @@ def generate_demographic_events(popilation: int = POPULATION) -> list:
     #    low=POPULATION_LIMITS[0], high=POPULATION_LIMITS[1], size=number_of_events)
 
     population_sizes = np.random.beta(
-        a=2, b=5, size=number_of_events)*popilation
+        a=2, b=5, size=number_of_events-1)*popilation
 
     # init_population = np.random.randint(
     #    low=POPULATION_LIMITS[0], high=POPULATION_LIMITS[1])
@@ -74,15 +74,28 @@ def generate_demographic_events(popilation: int = POPULATION) -> list:
         events.append(
             msprime.PopulationParametersChange(t, int(s), growth_rate=0)
         )
+
+    events.append(
+        msprime.PopulationParametersChange(exp_times[-1], 1, growth_rate=0)
+    )
+
     return events
 
 
 def give_rho() -> float:
-    return exp(np.random.uniform(RHO_LIMIT[0], RHO_LIMIT[1]))
+    return np.random.uniform(RHO_LIMIT[0], RHO_LIMIT[1])
 
 
 def give_mu() -> float:
-    return exp(np.random.uniform(MU_LIMIT[0], MU_LIMIT[1]))
+    return np.random.uniform(MU_LIMIT[0], MU_LIMIT[1])
+
+
+def give_random_coeff(mean=.128, var=.05) -> float:
+    return np.random.normal(.128, .005)
+
+
+def give_random_rho(base=RHO_HUMAN) -> float:
+    return np.random.uniform(0.0001, 100, 1)[0]*base
 
 
 class arg:
@@ -99,6 +112,7 @@ class arg:
     sample_size = 2
     demographic_events = generate_demographic_events()
 
+
 class Generator:
     def __init__(self, arg):
         self.arg = arg
@@ -112,64 +126,64 @@ class Generator:
             num_replicates=arg.num_repl,
             demographic_events=arg.demographic_events
         )
-        
-        
+
     def __iter__(self):
         return self
+
     def __next__(self):
         try:
             replica = next(self.data_generator)
         except StopIteration:
             raise StopIteration
-            
+
         haplotype = [0] * self.arg.l
         recombination_points = [0] * self.arg.l
         coal_times = [0] * self.arg.l
-        
-        # get mutations 
+
+        # get mutations
         for mutation in replica.mutations():
             point = round(mutation.position)
             if point < self.arg.l:
                 haplotype[point] = 1
             else:
                 haplotype[point - 1] = 1
-                
+
         # get coal times and recombination points
-        
+
         for tree in replica.trees():
-            l,r = tree.get_interval()
-            l,r = int(l), int(r)
+            l, r = tree.get_interval()
+            l, r = int(l), int(r)
             recombination_points[r - 1] = 1
             coal_times[l:r] = [tree.total_branch_length] * (r-l)
-            
+
         # discrete times
-        
+
         min_t, max_t = min(coal_times), max(coal_times)
 
         if max_t == min_t:
-            min_t = 0.0000001 # Почти ноль
+            min_t = 0.0000001  # Почти ноль
 
         a = (-np.log(max_t) + N*np.log(min_t))/(N-1)
         B = (-np.log(min_t) + np.log(max_t))/(N-1)
 
         def to_T(time):
             return round((np.log(time)-a)/B)
-        
+
         step_of_discratization = max_t/N
 
         def discretization(t):
             return min(int(t/step_of_discratization) + 1, self.N)
-        
+
         d_times = [to_T(t) for t in coal_times]
-        
+
         prioty_distribution = [0.0 for i in range(N+1)]
         for t in d_times:
             prioty_distribution[t] += 1
         prioty_distribution = [p/sum(prioty_distribution)
-                                for p in prioty_distribution]
+                               for p in prioty_distribution]
 
         intervals_starts = [np.e**(B*i+a) for i in range(N)]
-        
+
         main_data = {
             'random_seed': RANDOM_SEED,
             'prioty_distribution': prioty_distribution,
@@ -183,29 +197,28 @@ class Generator:
             'len': self.arg.l,
             'N': N
         }
-        
-        json_object = json.dumps(main_data, indent = 4) 
-        with open(f"{RANDOM_SEED}_{tl.time()}s_exp_info.json", "w+") as outfile: 
-            outfile.write(json_object) 
-        
-        
+
+        json_object = json.dumps(main_data, indent=4)
+        with open(f"{RANDOM_SEED}_{tl.time()}s_exp_info.json", "w+") as outfile:
+            outfile.write(json_object)
+
         return haplotype, d_times, recombination_points, prioty_distribution, intervals_starts
 
 
 if __name__ == "__main__":
     generator = Generator(arg)
-    
+
     x_path = os.path.join(sys.argv[1], "x")
     y_path = os.path.join(sys.argv[1], "y")
     pd_path = os.path.join(sys.argv[1], "PD")
     is_path = os.path.join(sys.argv[1], "IS")
-    
+
     for name, i in tqdm(enumerate(generator)):
         x = np.array(i[0], dtype=np.int64)
 
         # one_hot = torch.zeros(arg.l, N)
         # indices = np.array([np.arange(arg.l), np.array(i[1])-1], dtype=int)
-        # one_hot[indices] = 1. 
+        # one_hot[indices] = 1.
         # y = torch.FloatTensor(one_hot)
         y = np.array(i[1], dtype=np.int64) - 1
         pd = np.array(i[3])
