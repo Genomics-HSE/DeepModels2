@@ -65,8 +65,7 @@ def lightning_test(model: pl.LightningModule,
 if __name__ == '__main__':
     import argparse
     from parser_args import gru_add_arguments, gru_fg_add_arguments, conv_bert_add_arguments, bert_add_arguments, \
-        conv_add_arguments, \
-        gru_one_dir_add_arguments, conv_gru_add_arguments
+        conv_add_arguments, conv_gru_add_arguments
     
     parser = argparse.ArgumentParser(prog='Genomics')
     parser.add_argument(
@@ -110,14 +109,12 @@ if __name__ == '__main__':
     model_parsers = parser.add_subparsers(title='models', description='model to choose', dest='model')
     
     gru_parser = model_parsers.add_parser('gru')
-    gru_fg_parser = model_parsers.add_parser('gru_fg')
     conv_gru_parser = model_parsers.add_parser('conv_gru')
     conv_parser = model_parsers.add_parser('conv')
     bert_parser = model_parsers.add_parser('bert')
     conv_bert_parser = model_parsers.add_parser('conv_bert')
     
     gru_add_arguments(gru_parser)
-    gru_fg_add_arguments(gru_fg_parser)
     conv_gru_add_arguments(conv_gru_parser)
     conv_add_arguments(conv_parser)
     bert_add_arguments(bert_parser)
@@ -126,7 +123,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
     model = available.models[args.model].Model(args)
-    
     model_root, = ensure_directories(args.output, 'models/')
     test_output, = ensure_directories(args.data, "{}".format(model.name))
     default_root_dir, = ensure_directories(args.output, 'models/{}'.format(model.name))
@@ -167,7 +163,7 @@ if __name__ == '__main__':
                              auto_lr_find=args.auto_lr_find,
                              checkpoint_callback=False,
                              gpus=0 if args.device == 'cpu' else 1,
-                             truncated_bptt_steps=None # if not hasattr(args, "truncated_bptt_steps") else args.truncated_bptt_steps
+                             truncated_bptt_steps=None if not hasattr(args, "truncated_bptt_steps") else args.truncated_bptt_steps
                              )
         
         trainer, model, exp_key = lightning_train(trainer=trainer,

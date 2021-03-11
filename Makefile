@@ -9,7 +9,7 @@ cmt_project = population-genomics-new
 cmt_workspace = kenenbek
 cmt_offline = True
 exp_key = ""
-sqz = True
+sqz = False
 
 seed = 42
 resume = False
@@ -85,4 +85,4 @@ hse-run:
 	echo $(model-path)
 	make -f $(model-path) $(TARGET) --just-print --dry-run -s >> tmp_script.sh;
 	sbatch --gpus=$(GPU) -c $(CPU) -t $(T) tmp_script.sh; \
-	#rm tmp_script.sh
+	rm tmp_script.sh

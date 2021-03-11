@@ -1,4 +1,4 @@
-include ../../Makefile
+include Makefile
 
 ##################################################################
 #    						GRU                                  #
@@ -23,7 +23,6 @@ gru-vars = hidden_size=256 \
 endif
 
 $(call assign-vars, gru-train gru-test\
-					gru-fg-train gru-fg-test\
  					gru-print-args, $(gru-vars))
 
 gru-args = --hidden_size=$(hidden_size) --num_layers=$(num_layers) \

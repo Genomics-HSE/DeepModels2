@@ -15,14 +15,16 @@ class LightningModuleExtended(pl.LightningModule):
         # self.example_input_array = torch.LongTensor(1, 10).random_(0, 2)
         self.lr = 0.001
     
-    def training_step(self, batch, batch_ix):
+    def training_step(self, batch, batch_ix, hiddens):
         X_batch, y_batch = batch
-        logits = self.forward(X_batch)
-        # y_one_hot = one_hot_encoding(y_batch, self.n_output, device=self.device)
-        loss = self.loss(logits, y_batch)
-        result = pl.TrainResult(minimize=loss)
-        result.log("train_loss", loss, on_step=True, on_epoch=True)
-        return result
+        logits, hiddens = self.forward(X_batch, hiddens)
+        y_one_hot = one_hot_encoding(y_batch, self.n_output, device=self.device)
+        loss = self.loss(logits, y_one_hot)
+        self.log("train_loss", loss, on_step=True, on_epoch=True)
+        
+        return {'loss': loss,
+                'hiddens': hiddens
+                }
     
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
@@ -55,9 +57,7 @@ def one_hot_encoding(y_data, num_class, device):
     y_one_hot.zero_()
     y_one_hot.scatter_(2, y_data.unsqueeze(2), 1)
     return y_one_hot
-
-
-
+    
     #
     # def test_step(self, batch, batch_idx) -> Any:
     #     X_batch, y_batch = batch

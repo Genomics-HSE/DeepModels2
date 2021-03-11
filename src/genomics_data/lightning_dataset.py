@@ -107,7 +107,8 @@ class DatasetTorch(data.Dataset):
         super().__init__()
         
         X_path = os.path.join(path, "x")
-        y_path = os.path.join(path, "PD")
+        y = "PD" if use_distance else "y"
+        y_path = os.path.join(path, y)
         
         data_filenames = [str(i) + ".npy" for i in range(file_first, file_last + 1)]
         
@@ -119,7 +120,10 @@ class DatasetTorch(data.Dataset):
         for ix, filename in enumerate(data_filenames):
             X_file_path = os.path.join(X_path, filename)
             y_file_path = os.path.join(y_path, filename)
-            X_seq_padded_full, y_seq_full = load_with_padding_X_y(X_file_path, y_file_path, one_side_padding)
+            
+            X_seq_padded_full = np.load(X_file_path, mmap_mode=None)
+            y_seq_full = np.load(y_file_path, mmap_mode=None)
+            
             if split_to_batch:
                 X_seq_padded_full, y_seq_full = batchify(X_seq_padded_full, y_seq_full, seq_len, one_side_padding)
             # y_data_i_one_hot = one_hot_encoding_numpy(y_data_i, 20)

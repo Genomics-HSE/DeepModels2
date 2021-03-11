@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .conv_layer import ConvLayer
-from .training_process import LightningModuleExtended
+from genomics_utils import LightningModuleExtended
 
 
 class Model:
