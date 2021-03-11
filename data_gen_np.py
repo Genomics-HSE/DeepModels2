@@ -17,8 +17,8 @@ MU_LIMIT = (1.25*10e-9, 1.25*10e-7)
 LENGTH_NORMALIZE_CONST = 4
 ZIPPED = False
 NUMBER_OF_EVENTS_LIMITS = (1, 20)
-MAX_T_LIMITS = (0.01, 30)
-LAMBDA_EXP = 1.0
+MAX_T_LIMITS = (0.01, 50)
+LAMBDA_EXP = 1000
 POPULATION_LIMITS = (250, 100000)
 POPULATION = 5000
 
@@ -29,7 +29,7 @@ RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
 
 
-def generate_demographic_events(popilation: int = POPULATION) -> list:
+def generate_demographic_events(population: int = POPULATION) -> list:
     """
     Generate demographic events.
     1) We generate number of events
@@ -44,40 +44,16 @@ def generate_demographic_events(popilation: int = POPULATION) -> list:
     """
     number_of_events = np.random.randint(
         low=NUMBER_OF_EVENTS_LIMITS[0], high=NUMBER_OF_EVENTS_LIMITS[1])
-    max_t = np.random.uniform(low=MAX_T_LIMITS[0], high=MAX_T_LIMITS[1])
 
     times = sorted(np.random.exponential(LAMBDA_EXP, size=number_of_events))
 
-    alpha = 1.0
-    beta = np.log(max_t + 1)/times[-1]
+    population_sizes = np.array(np.random.uniform(0.2, 1.2, size=number_of_events)*population,dtype=int)
 
-    def to_exp_time(time: float) -> float:
-        # time -> exponentional time
-        return alpha*(np.exp(beta*time) - 1)
-
-    exp_times = [to_exp_time(t) for t in times]
-    # population_sizes = np.random.randint(
-    #    low=POPULATION_LIMITS[0], high=POPULATION_LIMITS[1], size=number_of_events)
-
-    population_sizes = np.random.beta(
-        a=2, b=5, size=number_of_events-1)*popilation
-
-    # init_population = np.random.randint(
-    #    low=POPULATION_LIMITS[0], high=POPULATION_LIMITS[1])
-
-    init_population = int(np.random.beta(a=2, b=5)*popilation)
-
-    events = [msprime.PopulationParametersChange(
-        0, initial_size=init_population, growth_rate=0)]
-
-    for t, s in zip(exp_times, population_sizes):
+    events = []
+    for t, s in zip(times, population_sizes):
         events.append(
-            msprime.PopulationParametersChange(t, int(s), growth_rate=0)
+            msprime.PopulationParametersChange(t, s)
         )
-
-    events.append(
-        msprime.PopulationParametersChange(exp_times[-1], 1, growth_rate=0)
-    )
 
     return events
 
@@ -91,15 +67,15 @@ def give_mu() -> float:
 
 
 def give_random_coeff(mean=.128, var=.05) -> float:
-    return np.random.normal(.128, .005)
-
+    return np.random.beta(.1,.028)*.0128
+    #return np.random.normal(.128, .005)
 
 def give_random_rho(base=RHO_HUMAN) -> float:
     return np.random.uniform(0.0001, 100, 1)[0]*base
 
 
 class arg:
-    Ne = 1.0
+    Ne = 5000.0
     rho = RHO_HUMAN
     mu = MU_HUMAN
     # num_repl = 1
@@ -116,6 +92,9 @@ class arg:
 class Generator:
     def __init__(self, arg):
         self.arg = arg
+        
+        assert arg.l*arg.rho < 1.0, f"lengt*recombination_rate should be less that 1, but {arg.l*arg.rho}"
+        
         self.data_generator = msprime.simulate(
             sample_size=arg.sample_size,
             recombination_rate=arg.rho,
