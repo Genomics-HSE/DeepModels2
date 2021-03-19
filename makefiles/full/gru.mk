@@ -14,7 +14,7 @@ gru-vars = hidden_size=10 \
 			   dropout=0.1 \
 			   truncated_bptt_steps=10
 else
-gru-vars = hidden_size=256 \
+gru-vars = hidden_size=32 \
 			   num_layers=2 \
 			   batch_first=True \
 			   bidirectional=True \
