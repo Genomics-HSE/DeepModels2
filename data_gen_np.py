@@ -9,8 +9,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-RHO_HUMAN = 1.6*10e-9 * 100
-MU_HUMAN = 1.25*10e-8 * 100
+RHO_HUMAN = 1.6*10e-9
+MU_HUMAN = 1.25*10e-8
 RHO_LIMIT = (1.6*10e-8, 1.6*10e-10)
 MU_LIMIT = (1.25*10e-9, 1.25*10e-7)
 
