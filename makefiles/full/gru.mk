@@ -1,3 +1,5 @@
+.PHONY: gru gru-train gru-test
+model-path := $(MAKEFILE_LIST)
 include Makefile
 
 ##################################################################
