@@ -1,4 +1,4 @@
-.PHONY: conv conv-train conv-train
+.PHONY: conv-small conv-train-small conv-test-small conv-print-args
 model-path := $(MAKEFILE_LIST)
 include Makefile
 
@@ -6,7 +6,7 @@ include Makefile
 #                       CONVOLUTIONAL MODEL                         #
 #####################################################################
 
-conv: conv-train conv-test
+conv-small: conv-train-small conv-test-small
 
 ifdef FAST_RUN
 conv-vars = channel_size=10 \
@@ -28,13 +28,14 @@ conv-args = --channel_size=$(channel_size) --conv_kernel_size=$(conv_kernel_size
             --conv_stride=$(conv_stride) --num_layers=$(num_layers) --dropout_p=$(dropout_p) \
             --pool_kernel_size=$(pool_kernel_size)
 
-$(call assign-vars, conv-train conv-test, $(conv-vars))
+$(call assign-vars, conv-train-small conv-test-small conv-print-args, $(conv-vars))
 
-conv-train:
-	$(train) conv $(conv-args)
+conv-train-small:
+	$(train) conv_small $(conv-args)
 
-conv-test:
-	$(test) conv $(conv-args)
+conv-test-small:
+	$(test) conv_small $(conv-args)
 
 conv-print-args:
 	@echo $(conv-args)
+	@echo $(seed)

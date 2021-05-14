@@ -108,12 +108,12 @@ class RandomDataIteratorOneSeq(CustomDataset):
             yield self.get_batch(X_data, y_data, batch_ix)
 
 
-def batchify(padded_x_seq, y_seq, seq_len, one_side_padding):
+def batchify(x_seq, y_seq, seq_len):
     X_batch = []
     y_batch = []
-    for i in tqdm(range(one_side_padding, len(padded_x_seq) - seq_len - one_side_padding + 1, seq_len)):
-        X_batch.append(padded_x_seq[i - one_side_padding:i + seq_len + one_side_padding])
-        y_batch.append(y_seq[i - one_side_padding:i - one_side_padding + seq_len])
+    for i in tqdm(range(0, len(x_seq) - seq_len, seq_len)):
+        X_batch.append(x_seq[i: i + seq_len])
+        y_batch.append(y_seq[i: i + seq_len])
     X_batch = np.vstack(X_batch)
     y_batch = np.vstack(y_batch)
     print("Shape of datasets: X is {} and y {} ".format(X_batch.shape, y_batch.shape))

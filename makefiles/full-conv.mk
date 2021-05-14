@@ -24,3 +24,7 @@ conv-train:
 
 conv-test:
 	$(test) conv $(conv-args)
+
+conv-print-args:
+	@echo $(conv-args)
+	@echo $(dropout_p)

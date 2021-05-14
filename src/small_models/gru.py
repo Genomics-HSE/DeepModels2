@@ -50,6 +50,9 @@ class EncoderGRU(LightningModuleExtended):
         :return:
         """
         # (batch_size, seq_len, 1)
+        print("kotok")
+        print("kotok")
+        print("kotok")
         _, hidden = self.gru(input)
         num_layers_and_bidir, batch, hidden_size = hidden.shape
         hidden = hidden.view(self.num_layers, 1 + self.bidirectional, batch, hidden_size)

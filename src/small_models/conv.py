@@ -3,24 +3,24 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 
-from genomics_utils import LightningModuleExtended
+from .training import SmallModelTraining
 
 
 class Model:
     def __new__(cls, args):
-        return CNNSqueeze(channel_size=args.channel_size,
-                          conv_kernel_size=args.conv_kernel_size,
-                          conv_stride=args.conv_stride,
-                          num_layers=args.num_layers,
-                          dropout_p=args.dropout_p,
-                          pool_kernel_size=args.pool_kernel_size,
-                          n_output=args.n_output,
-                          seq_len=args.seq_len,
-                          sqz_seq_len=args.sqz_seq_len
-                          )
+        return CNN(channel_size=args.channel_size,
+                   conv_kernel_size=args.conv_kernel_size,
+                   conv_stride=args.conv_stride,
+                   num_layers=args.num_layers,
+                   dropout_p=args.dropout_p,
+                   pool_kernel_size=args.pool_kernel_size,
+                   n_output=args.n_class,
+                   seq_len=args.seq_len,
+                   sqz_seq_len=args.sqz_seq_len
+                   )
 
 
-class CNNSqueeze(LightningModuleExtended):
+class CNN(SmallModelTraining):
     def __init__(self, channel_size, conv_kernel_size, conv_stride, num_layers, dropout_p,
                  pool_kernel_size, n_output, seq_len, sqz_seq_len):
         super().__init__()
@@ -38,7 +38,7 @@ class CNNSqueeze(LightningModuleExtended):
         in_out_channels = [(1, channel_size)]
         in_out_channels = in_out_channels + [(channel_size, channel_size) for _ in range(num_layers - 2)]
         in_out_channels = in_out_channels + [(channel_size, 1)]
-
+        
         conv_pad = 0
         for _ in range(num_layers):
             conv_out_size = math.floor(((sqz_seq_len - conv_kernel_size + 2 * conv_pad) / conv_stride) + 1)
@@ -60,7 +60,7 @@ class CNNSqueeze(LightningModuleExtended):
     
     def forward(self, input):
         """
-        :param input: (batch_size, seq_len)
+        :param input: (batch_size, seq_len, 1)
         :return:
         """
         input = input.permute(0, 2, 1)

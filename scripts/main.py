@@ -84,18 +84,19 @@ if __name__ == '__main__':
     parser.add_argument('--cmt_disabled', type=boolean_string, default=True)
     parser.add_argument('--quiet', type=boolean_string, default=False)
     
-    parser.add_argument('--sqz', type=boolean_string, default=False)
-    parser.add_argument('--seq_len', type=float_to_int, default=1)
-    parser.add_argument('--sqz_seq_len', type=float_to_int, default=1)
-    parser.add_argument('--padding', type=int, default=0)
-    parser.add_argument('--input_size', type=int, default=1)
-    parser.add_argument('--n_token_in', type=int, default=2)
-    parser.add_argument('--n_output', type=int, default=20)
+    parser.add_argument('--seq2seq', type=boolean_string)
+    parser.add_argument('--seq_len', type=float_to_int)
+    parser.add_argument('--squeeze', type=boolean_string)
+    parser.add_argument('--sqz_seq_len', type=float_to_int)
+    parser.add_argument('--split_sample', type=boolean_string)
+    parser.add_argument('--split_seq_len', type=float_to_int)
     
-    parser.add_argument('--tr_file_first', type=int, default=0)
-    parser.add_argument('--tr_file_last', type=int, default=0)
-    parser.add_argument('--te_file_first', type=int, default=1)
-    parser.add_argument('--te_file_last', type=int, default=1)
+    parser.add_argument('--n_class', type=int)
+    
+    parser.add_argument('--tr_file_first', type=int)
+    parser.add_argument('--tr_file_last', type=int)
+    parser.add_argument('--te_file_first', type=int)
+    parser.add_argument('--te_file_last', type=int)
     
     parser.add_argument('--action', type=str, choices=['train', 'test'])
     parser.add_argument('--seed', type=int, default=42)
@@ -108,17 +109,20 @@ if __name__ == '__main__':
     
     model_parsers = parser.add_subparsers(title='models', description='model to choose', dest='model')
     
+    # full models
     gru_parser = model_parsers.add_parser('gru')
     conv_gru_parser = model_parsers.add_parser('conv_gru')
-    conv_parser = model_parsers.add_parser('conv')
     bert_parser = model_parsers.add_parser('bert')
     conv_bert_parser = model_parsers.add_parser('conv_bert')
     
     gru_add_arguments(gru_parser)
     conv_gru_add_arguments(conv_gru_parser)
-    conv_add_arguments(conv_parser)
     bert_add_arguments(bert_parser)
     conv_bert_add_arguments(conv_bert_parser)
+
+    # small models
+    conv_small_parser = model_parsers.add_parser('conv_small')
+    conv_add_arguments(conv_small_parser)
     
     args = parser.parse_args()
     print(args)
@@ -147,14 +151,17 @@ if __name__ == '__main__':
                            tr_file_last=args.tr_file_last,
                            te_file_first=args.te_file_first,
                            te_file_last=args.te_file_last,
-                           one_side_padding=args.padding,
+                           seq2seq=args.seq2seq,
                            seq_len=args.seq_len,
+                           squeeze=args.squeeze,
                            sqz_seq_len=args.sqz_seq_len,
+                           split_sample=args.split_sample,
+                           split_seq_len=args.split_seq_len,
+                           n_class=args.n_class,
                            batch_size=args.batch_size,
-                           n_output=args.n_output,
                            shuffle=args.shuffle,
-                           num_workers=args.num_workers,
-                           use_distance=args.sqz)
+                           num_workers=args.num_workers
+                           )
     
     if args.action == 'train':
         trainer = pl.Trainer(default_root_dir=default_root_dir,

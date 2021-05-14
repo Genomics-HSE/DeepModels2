@@ -8,14 +8,16 @@ from genomics_utils import LightningModuleExtended
 
 class Model:
     def __new__(cls, args):
-        return Encoder(seq_len=args.seq_len,
+        return Encoder(seq2seq=args.seq2seq,
+                       seq_len=args.seq_len,
+                       squeeze=args.squeeze,
                        input_size=args.input_size,
                        hidden_size=args.hidden_size,
                        num_layers=args.num_layers,
                        batch_first=args.batch_first,
                        bidirectional=args.bidirectional,
                        dropout=args.dropout,
-                       n_output=args.n_output,
+                       n_output=args.n_class,
                        t_bptt=args.truncated_bptt_steps
                        )
 
@@ -32,12 +34,14 @@ class GruDummyInput(nn.Module):
 
 
 class Encoder(LightningModuleExtended):
-    def __init__(self, seq_len, input_size, hidden_size, num_layers,
+    def __init__(self, seq2seq, seq_len, squeeze, input_size, hidden_size, num_layers,
                  batch_first, bidirectional, dropout, n_output, t_bptt):
         super().__init__()
         self.save_hyperparameters()
         
-        self.inp_seq_len = seq_len
+        self.seq2seq = seq2seq
+        self.seq_len = seq_len
+        self.squeeze = squeeze
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.bidirectional = bidirectional
@@ -65,8 +69,21 @@ class Encoder(LightningModuleExtended):
             :param input: (batch_size, seq_len, 1)
             :return:
             """
+        #print(len(input), type(input))
+        #print(len(input[0]), type(input[0]))
+        lengths = [len(x) for x in input]
+        input = [torch.from_numpy(x) for x in input]
+        input = torch.nn.utils.rnn.pad_sequence(input, batch_first=True)
+        input = input.unsqueeze(2)
+        input = torch.nn.utils.rnn.pack_padded_sequence(input,
+                                                        batch_first=True,
+                                                        lengths=lengths)
+        
+        # print(input.shape)
+        
         input = input.float()
         output, hiddens = cp.checkpoint(self.gru, *(input, hiddens, self.dummy_tensor))
+        # output, hiddens = self.gru(input, hiddens, self.dummy_tensor)
         
         output = self.dropout1(F.relu(self.dense1(output)))
         output = F.log_softmax(self.dense2(output), dim=-1)
@@ -74,10 +91,11 @@ class Encoder(LightningModuleExtended):
     
     @property
     def name(self):
-        return 'Gen{}-tbptt{}-GRU-sl{}-hs{}-nl{}-dir{}'.format(self.n_output,
-                                                               self.t_bptt,
-                                                               self.inp_seq_len,
-                                                               self.hidden_size,
-                                                               self.num_layers,
-                                                               1 + int(self.bidirectional)
-                                                               )
+        return 'Gen{}-sqz{}-tbptt{}-GRU-sl{}-hs{}-nl{}-dir{}'.format(self.n_output,
+                                                                     int(self.squeeze),
+                                                                     self.t_bptt,
+                                                                     self.seq_len,
+                                                                     self.hidden_size,
+                                                                     self.num_layers,
+                                                                     1 + int(self.bidirectional)
+                                                                     )

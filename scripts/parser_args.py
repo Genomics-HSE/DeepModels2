@@ -2,8 +2,9 @@ from genomics_utils import boolean_string
 
 
 def gru_add_arguments(parser):
-    parser.add_argument('--hidden_size', type=int, default=64)
-    parser.add_argument('--num_layers', type=int, default=2)
+    parser.add_argument('--input_size', type=int)
+    parser.add_argument('--hidden_size', type=int)
+    parser.add_argument('--num_layers', type=int)
     parser.add_argument('--batch_first', type=boolean_string, default=True)
     parser.add_argument('--bidirectional', type=boolean_string, default=True)
     parser.add_argument('--dropout', type=float, default=0.2)

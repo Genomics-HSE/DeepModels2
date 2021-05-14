@@ -1,5 +1,5 @@
-import squeeze_models
-import sequence_models
+import small_models
+import full_models
 
 __all__ = [
     'models',
@@ -7,9 +7,12 @@ __all__ = [
 ]
 
 models = {
-    attr: getattr(sequence_models, attr)
-    for attr in sequence_models.__all__
+    attr: getattr(full_models, attr)
+    for attr in full_models.__all__
 }
+
+for attr in small_models.__all__:
+    models[attr] = getattr(small_models, attr)
 
 
 experiments = {

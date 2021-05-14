@@ -1,4 +1,4 @@
-.PHONY: gru gru-train gru-test
+.PHONY: gru gru-train gru-test gru-print-args
 model-path := $(MAKEFILE_LIST)
 include Makefile
 
@@ -7,7 +7,7 @@ include Makefile
 ##################################################################
 
 gru: gru-train gru-test
-
+input_size=1
 ifdef FAST_RUN
 gru-vars = hidden_size=10 \
 			   num_layers=2 \
@@ -27,7 +27,7 @@ endif
 $(call assign-vars, gru-train gru-test\
  					gru-print-args, $(gru-vars))
 
-gru-args = --hidden_size=$(hidden_size) --num_layers=$(num_layers) \
+gru-args = --input_size=$(input_size) --hidden_size=$(hidden_size) --num_layers=$(num_layers) \
            --batch_first=$(batch_first) --bidirectional=$(bidirectional) --dropout=$(dropout) \
            --truncated_bptt_steps=$(truncated_bptt_steps)
 

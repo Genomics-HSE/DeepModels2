@@ -16,14 +16,17 @@ class DatasetPL(pl.LightningDataModule):
                  tr_file_last: int,
                  te_file_first: int,
                  te_file_last: int,
-                 one_side_padding: int,
+                 seq2seq: bool,
                  seq_len: int,
+                 squeeze: bool,
                  sqz_seq_len: int,
+                 split_sample: bool,
+                 split_seq_len: int,
+                 n_class: int,
                  batch_size: int,
-                 n_output: int,
                  shuffle: bool,
-                 num_workers: int,
-                 use_distance: bool):
+                 num_workers: int
+                 ):
         super(DatasetPL, self).__init__()
         self.path = path
         
@@ -31,12 +34,15 @@ class DatasetPL(pl.LightningDataModule):
         self.tr_file_last = tr_file_last
         self.te_file_first = te_file_first
         self.te_file_last = te_file_last
-        self.use_distance = use_distance  # use distance instead of snp
         
-        self.one_side_padding = one_side_padding
+        self.seq2seq = seq2seq
         self.seq_len = seq_len
+        self.squeeze = squeeze  # use distance instead of snp
         self.sqz_seq_len = sqz_seq_len
-        self.n_output = n_output
+        self.split_sample = split_sample
+        self.split_seq_len = split_seq_len
+        
+        self.n_class = n_class
         
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -45,45 +51,38 @@ class DatasetPL(pl.LightningDataModule):
         self.train_dataset = None
         self.val_dataset = None
         self.test_dataset = None
+        
+        self.collate_fn = collate_distances_fn if squeeze else None
     
     def setup(self, stage: Optional[str] = None):
         if stage == 'fit' or stage is None:
-            # if os.environ.get("FAST_RUN") is not None:
-            #     self.train_dataset = MockDataset(batch_size=self.batch_size,
-            #                                      seq_len=self.seq_len,
-            #                                      one_side_padding=self.one_side_padding,
-            #                                      n_classes=self.n_output,
-            #                                      use_distance=self.use_distance)
-            # else:
             self.train_dataset = DatasetTorch(path=self.path,
                                               file_first=self.tr_file_first,
                                               file_last=self.tr_file_last,
-                                              one_side_padding=self.one_side_padding,
-                                              seq_len=self.seq_len,
+                                              seq2seq=self.seq2seq,
+                                              squeeze=self.squeeze,
                                               sqz_seq_len=self.sqz_seq_len,
-                                              use_distance=self.use_distance)
+                                              split_sample=self.split_sample,
+                                              split_seq_len=self.split_seq_len
+                                              )
         
         if stage == 'test' or stage is None:
-            # if os.environ.get("FAST_RUN") is not None:
-            #     self.test_dataset = MockDataset(batch_size=self.batch_size,
-            #                                     seq_len=self.seq_len,
-            #                                     one_side_padding=self.one_side_padding,
-            #                                     n_classes=self.n_output,
-            #                                     use_distance=self.use_distance)
-            # else:
             self.test_dataset = DatasetTorch(path=self.path,
                                              file_first=self.te_file_first,
                                              file_last=self.te_file_last,
-                                             one_side_padding=self.one_side_padding,
-                                             seq_len=self.seq_len,
+                                             seq2seq=self.seq2seq,
+                                             squeeze=self.squeeze,
                                              sqz_seq_len=self.sqz_seq_len,
-                                             use_distance=self.use_distance)
+                                             split_sample=False,
+                                             split_seq_len=None
+                                             )
     
     def train_dataloader(self, *args, **kwargs) -> DataLoader:
         return DataLoader(self.train_dataset,
                           batch_size=self.batch_size,
                           shuffle=self.shuffle,
                           num_workers=self.num_workers,
+                          collate_fn=self.collate_fn
                           )
     
     def test_dataloader(self, *args, **kwargs) -> Union[DataLoader, List[DataLoader]]:
@@ -91,23 +90,29 @@ class DatasetPL(pl.LightningDataModule):
                           batch_size=1,
                           shuffle=self.shuffle,
                           num_workers=self.num_workers,
+                          collate_fn=self.collate_fn
                           )
 
 
+def collate_distances_fn(batch):
+    X = [item[0] for item in batch]
+    target = [item[1] for item in batch]
+    return [X, target]
+
+
 class DatasetTorch(data.Dataset):
-    def __init__(self, path, file_first, file_last, one_side_padding, seq_len, use_distance,
-                 sqz_seq_len, split_to_batch=False):
+    def __init__(self, path, file_first, file_last, seq2seq, squeeze, sqz_seq_len,
+                 split_sample, split_seq_len):
         """
         :param path: a common path to `X` and `y` folder.
         :param file_first:
         :param file_last:
-        :param one_side_padding:
         :param seq_len:
         """
         super().__init__()
         
         X_path = os.path.join(path, "x")
-        y = "PD" if use_distance else "y"
+        y = "y" if seq2seq else "PD"
         y_path = os.path.join(path, y)
         
         data_filenames = [str(i) + ".npy" for i in range(file_first, file_last + 1)]
@@ -121,27 +126,24 @@ class DatasetTorch(data.Dataset):
             X_file_path = os.path.join(X_path, filename)
             y_file_path = os.path.join(y_path, filename)
             
-            X_seq_padded_full = np.load(X_file_path, mmap_mode=None)
+            X_seq_full = np.load(X_file_path, mmap_mode=None)
             y_seq_full = np.load(y_file_path, mmap_mode=None)
             
-            if split_to_batch:
-                X_seq_padded_full, y_seq_full = batchify(X_seq_padded_full, y_seq_full, seq_len, one_side_padding)
-            # y_data_i_one_hot = one_hot_encoding_numpy(y_data_i, 20)
-            if use_distance:
-                X_seq_padded_full = convert_snp_to_distances(X_seq_padded_full)
-                if len(X_seq_padded_full) >= sqz_seq_len:
-                    X_seq_padded_full = X_seq_padded_full[:sqz_seq_len]
-                else:
-                    X_seq_padded_full = add_zeros_at_end(X_seq_padded_full, sqz_seq_len)
+            if squeeze:
+                X_seq_full = convert_snp_to_distances(X_seq_full)
             
-            X_data_res.append(X_seq_padded_full)
+            if split_sample:
+                X_seq_full, y_seq_full = batchify(X_seq_full, y_seq_full, split_seq_len)
+            # y_data_i_one_hot = one_hot_encoding_numpy(y_data_i, 20)
+            
+            X_data_res.append(X_seq_full)
             y_data_res.append(y_seq_full)
             self.ix_to_filename[ix] = filename
         
-        # X_data batch_size, seq_len, 1
-        self.X_data = np.expand_dims(np.vstack(X_data_res), axis=2)
-        print(self.X_data.shape)
-        self.y_data = np.vstack(y_data_res)
+        # X_data batch_size, seq_len
+        self.X_data = X_data_res
+        # print(self.X_data.shape)
+        self.y_data = y_data_res
     
     def __len__(self):
         """
@@ -183,13 +185,14 @@ def one_hot_encoding_numpy(y_data, num_class):
 
 def convert_snp_to_distances(single_genome):
     """
-    
     :param single_genome:
     :return:
     """
     indices = np.where(single_genome == 1)[0]
-    distances = np.diff(indices) - 1
+    distances = np.diff(indices)
     
+    # distances = np.insert(distances, [0, len(distances)], indices[0])
+    distances = np.insert(distances, [0, len(distances)], [indices[0], len(single_genome) - indices[-1]])
     return distances.astype('float32')
 
 

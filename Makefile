@@ -2,6 +2,14 @@ SHELL=/bin/bash
 assign-vars = $(foreach A,$2,$(eval $1: $A))
 .PHONY: hse-run test_data clean-output
 
+seq2seq = True
+squeeze = True
+split_sample = False
+split_seq_len = 0
+n_token_in=2
+input_size=1
+n_class=20
+
 output = output/
 checkpoint_path =
 logger = local
@@ -9,19 +17,12 @@ cmt_project = population-genomics-new
 cmt_workspace = kenenbek
 cmt_offline = True
 exp_key = ""
-sqz = False
 
 seed = 42
 resume = False
 lr=0.001
 auto_lr_find=False
 shuffle=False
-
-padding=0
-n_token_in=2
-input_size=1
-n_class=20
-
 
 ifdef FAST_RUN
 	seq_len=1000
@@ -33,9 +34,9 @@ ifdef FAST_RUN
 	data = data/len1000-gen20-np
 	batch_size=4
 	tr_file_first=0
-    tr_file_last=19
-    te_file_first=20
-    te_file_last=24
+    tr_file_last=4
+    te_file_first=5
+    te_file_last=8
 else
 	seq_len=30e6
 	sqz_seq_len=30e5
@@ -54,8 +55,8 @@ endif
 launcher = python scripts/main.py \
 		  --device=$(device) --data=$(data) --output=$(output) --logger=$(logger) --cmt_offline=$(cmt_offline) \
 		  --cmt_project=$(cmt_project) --cmt_workspace=$(cmt_workspace) --cmt_disabled=$(cmt_disabled) \
-		  --sqz=$(sqz) --seq_len=$(seq_len) --sqz_seq_len=$(sqz_seq_len) --n_output=$(n_class) --input_size=$(input_size) \
-		  --n_token_in=$(n_token_in) --padding=$(padding) \
+		  --seq2seq=$(seq2seq) --seq_len=$(seq_len) --squeeze=$(squeeze) --sqz_seq_len=$(sqz_seq_len) \
+		  --split_sample=$(split_sample) --split_seq_len=$(split_seq_len) --n_class=$(n_class) \
 		  --tr_file_first=$(tr_file_first) --tr_file_last=$(tr_file_last) --te_file_first=$(te_file_first) \
 		  --te_file_last=$(te_file_last) \
 		  --batch_size=$(batch_size) --shuffle=$(shuffle) --num_workers=$(num_workers)
