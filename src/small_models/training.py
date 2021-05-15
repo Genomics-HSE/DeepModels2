@@ -15,10 +15,10 @@ class SmallModelTraining(LightningModuleExtended):
     def training_step(self, batch, batch_ix):
         X_batch, y_batch = batch
         X_batch = self.pad_input(X_batch, self.sqz_seq_len)
-        X_batch = torch.from_numpy(X_batch.astype('float32'))
-        y_batch = torch.from_numpy(np.vstack(y_batch).astype('float32'))
+        X_batch = torch.from_numpy(X_batch.astype('float32')).to(self.device)
         
         logits = self.forward(X_batch)
+        y_batch = torch.from_numpy(np.vstack(y_batch).astype('float32')).to(self.device)
         loss = self.loss(logits, y_batch)
         self.log("train_loss", loss, on_step=True, on_epoch=True)
         return {'loss': loss
