@@ -42,7 +42,7 @@ class EncoderGRU(LightningModuleExtended):
         self.dropout1 = nn.Dropout(dropout)
         self.dense2 = nn.Linear(hidden_size, hidden_size)
         self.dropout2 = nn.Dropout(dropout)
-        self.dense3 = nn.Linear(hidden_size, n_output + 1)
+        self.dense3 = nn.Linear(hidden_size, n_output)
     
     def forward(self, input):
         """

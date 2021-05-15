@@ -31,7 +31,7 @@ class CNN(SmallModelTraining):
         self.conv_stride = conv_stride
         self.num_layers = num_layers
         self.pool_kernel_size = pool_kernel_size
-        self.n_output = n_output + 1
+        self.n_output = n_output
         self.seq_len = seq_len
         self.sqz_seq_len = sqz_seq_len
         
