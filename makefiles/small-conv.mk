@@ -1,6 +1,7 @@
 .PHONY: conv-small conv-train-small conv-test-small conv-print-args
 model-path := $(MAKEFILE_LIST)
 include Makefile
+# include ex.mk
 
 #####################################################################
 #                       CONVOLUTIONAL MODEL                         #
@@ -17,11 +18,11 @@ conv-vars = channel_size=10 \
 			pool_kernel_size=5
 else
 conv-vars = channel_size=32 \
-			conv_kernel_size=25 \
-			conv_stride=2 \
+			conv_kernel_size=5 \
+			conv_stride=1 \
 			num_layers=4 \
 			dropout_p=0.1 \
-			pool_kernel_size=5
+			pool_kernel_size=4
 endif
 
 conv-args = --channel_size=$(channel_size) --conv_kernel_size=$(conv_kernel_size) \
@@ -39,3 +40,5 @@ conv-test-small:
 conv-print-args:
 	@echo $(conv-args)
 	@echo $(seed)
+	echo $(n_class)
+	echo $(model-path)
