@@ -38,13 +38,13 @@ ifdef FAST_RUN
     te_file_first=5
     te_file_last=8
 else
-	seq_len=30e6
-	sqz_seq_len=30e5
+	seq_len=3e5
+	sqz_seq_len=3e4
 	n_epochs=50
 	device=cuda
 	num_workers=8
 	cmt_disabled=False
-	data = ../len30e6-gen20-np
+	data = ../len3e5-gen32-dem100-np
 	batch_size=16
 	tr_file_first=0
     tr_file_last=149

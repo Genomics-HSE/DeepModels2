@@ -78,11 +78,14 @@ class CNN(SmallModelTraining):
     
     @property
     def name(self):
-        return 'SQZ-CONV-chan{}-krs{}-str{}-nl{}-pkrs{}'.format(self.channel_size,
-                                                                self.conv_kernel_size,
-                                                                self.conv_stride,
-                                                                self.num_layers,
-                                                                self.pool_kernel_size)
+        return 'Small-len{}-CONV-chan{}-krs{}-str{}-nl{}-pkrs{}'.format(
+            self.seq_len,
+            self.channel_size,
+            self.conv_kernel_size,
+            self.conv_stride,
+            self.num_layers,
+            self.pool_kernel_size
+        )
 
 
 class ConvBlock(pl.LightningModule):

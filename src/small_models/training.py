@@ -24,18 +24,6 @@ class SmallModelTraining(LightningModuleExtended):
         return {'loss': loss
                 }
     
-    def test_step(self, batch, batch_idx) -> Any:
-        X_batch, y_batch = batch
-        logits = self.forward(X_batch)
-        preds = torch.exp(logits)
-        preds = torch.flatten(preds, start_dim=0, end_dim=1)
-        
-        # y_batch = torch.argmax(y_batch, dim=-1)
-        y = y_batch.flatten()
-        
-        preds = preds.cpu().detach()
-        self.logger.log_coalescent_heatmap(self.name, [preds.T, y.T], batch_idx)
-    
     def pad_input(self, input, sqz_seq_len):
         # input is a list of numpy arrays
         data = []

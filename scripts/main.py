@@ -52,12 +52,12 @@ def lightning_test(model: pl.LightningModule,
         for i, (genome, target_weights) in enumerate(datamodule.test_dataset):
             genome = torch.from_numpy(genome)
             genome = genome.unsqueeze(0)
-            weights = model(genome)
-            weights = weights.squeeze()
+            distribution = model(genome)
+            distribution = distribution.squeeze()
         
             # write to file
             filename = ix_to_filename[i]
-            np.save(os.path.join(test_output, filename), weights)
+            np.save(os.path.join(test_output, filename), distribution)
         
     return
 
