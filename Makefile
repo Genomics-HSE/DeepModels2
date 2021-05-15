@@ -47,9 +47,9 @@ else
 	data = ../len3e5-gen32-dem100-np
 	batch_size=16
 	tr_file_first=0
-    tr_file_last=149
-    te_file_first=150
-    te_file_last=199
+    tr_file_last=399
+    te_file_first=400
+    te_file_last=499
 endif
 
 launcher = python scripts/main.py \
