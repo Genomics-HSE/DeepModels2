@@ -8,7 +8,7 @@ split_sample = False
 split_seq_len = 0
 n_token_in=2
 input_size=1
-n_class=20
+n_class=32
 
 output = output/
 checkpoint_path =
@@ -30,8 +30,8 @@ ifdef FAST_RUN
 	n_epochs=1
 	device=cpu
 	num_workers=1
-	cmt_disabled=True
-	data = data/len1000-gen20-np
+	cmt_disabled=False
+	data = data/len1000-gen32-np
 	batch_size=4
 	tr_file_first=0
     tr_file_last=4

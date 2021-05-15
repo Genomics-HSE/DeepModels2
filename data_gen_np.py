@@ -1,209 +1,245 @@
 import os
 import sys
-import json
-import time as tl
 from math import (exp, log)
 
 import msprime
 import numpy as np
-import torch
-from tqdm import tqdm
 
-RHO_HUMAN = 1.6*10e-9
-MU_HUMAN = 1.25*10e-8
-RHO_LIMIT = (1.6*10e-8, 1.6*10e-10)
-MU_LIMIT = (1.25*10e-9, 1.25*10e-7)
-
-LENGTH_NORMALIZE_CONST = 4
-ZIPPED = False
-NUMBER_OF_EVENTS_LIMITS = (1, 20)
-MAX_T_LIMITS = (0.01, 50)
-LAMBDA_EXP = 1000
-POPULATION_LIMITS = (250, 100000)
-POPULATION = 5000
-
-# N = 20
 N = int(sys.argv[4])
+
+T_max = 20#400_000
+coeff = np.log(T_max)/(N-1)
+
+limits = [np.exp(coeff*i) for i in range(N)]
+limits = [2_000*(np.exp(i*np.log(1+10*T_max)/N )-1) for i in range(N)]
+
 
 RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
 
 
-def generate_demographic_events(population: int = POPULATION) -> list:
-    """
-    Generate demographic events.
-    1) We generate number of events
-    2) We choise time when events happens
-    3) We choise how population has changed
+L_HUMAN = int(float(sys.argv[3])) #30_000_000
+RHO_HUMAN = 1.6*10e-9
+MU_HUMAN = 1.25*10e-8
 
-    For more information learn msprime documentation
+RHO_LIMIT = (1.6*10e-10, 1.6*10e-8)
+MU_LIMIT = (1.25*10e-7, 1.25*10e-9)
 
+NUMBER_OF_EVENTS_LIMITS = (1, 20)
+LAMBDA_EXP = 20_000
 
-    Must return list of msprime.PopulationParametersChange objects
-    https://msprime.readthedocs.io/en/stable/api.html#demographic-events
-    """
-    number_of_events = np.random.randint(
-        low=NUMBER_OF_EVENTS_LIMITS[0], high=NUMBER_OF_EVENTS_LIMITS[1])
+POPULATION = 10_000
+POPULATION_COEFF_LIMITS = (0.5, 1.5)
 
-    times = sorted(np.random.exponential(LAMBDA_EXP, size=number_of_events))
+MIN_POPULATION_NUM = 1_000
+MAX_POPULATION_NUM = 120_000
 
-    population_sizes = np.array(np.random.uniform(0.2, 1.2, size=number_of_events)*population,dtype=int)
+POPULATION_SIZE_LIMITS = (MIN_POPULATION_NUM, MAX_POPULATION_NUM)
 
-    events = []
-    for t, s in zip(times, population_sizes):
-        events.append(
-            msprime.PopulationParametersChange(t, s)
-        )
+lambda_exp = 500
+coal_limits = .0001 #0.999
 
-    return events
-
+POPULATION_COEFF_LIMIT_COMPLEX = [1.0, 2.0]
 
 def give_rho() -> float:
-    return np.random.uniform(RHO_LIMIT[0], RHO_LIMIT[1])
+    return np.random.uniform(*RHO_LIMIT)
 
 
 def give_mu() -> float:
-    return np.random.uniform(MU_LIMIT[0], MU_LIMIT[1])
+    return np.random.uniform(*MU_LIMIT)
 
 
 def give_random_coeff(mean=.128, var=.05) -> float:
-    return np.random.beta(.1,.028)*.0128
-    #return np.random.normal(.128, .005)
+    return np.random.beta(.1, .028)*.0128
+
 
 def give_random_rho(base=RHO_HUMAN) -> float:
     return np.random.uniform(0.0001, 100, 1)[0]*base
 
+def give_population_size() -> int:
+    return int(np.random.uniform(*[1_000,29_000]))
 
-class arg:
-    Ne = 5000.0
-    rho = RHO_HUMAN
-    mu = MU_HUMAN
-    # num_repl = 1
-    # l = 300
-    num_repl = int(float(sys.argv[2]))
-    l = int(float(sys.argv[3]))
-    ratio_train_examples = 0.9
-    random_seed = 42
-    model = "hudson"
-    sample_size = 2
-    demographic_events = generate_demographic_events()
+def generate_demographic_events_complex(population: int = None) -> 'msprime.Demography':
+    
+    if not population:
+        population = give_population_size()
+    
+    demography = msprime.Demography()
+    demography.add_population(name="A", initial_size=population)
 
+    last_population_size = population
+    T = 0
+    coal_probability = 0.0
+    coal_probability_list = [] 
+    non_coal_probability = 1.0
 
-class Generator:
-    def __init__(self, arg):
-        self.arg = arg
+    while T < 420_000:
+        t = np.random.exponential(lambda_exp)
+        T += t
         
-        assert arg.l*arg.rho < 1.0, f"lengt*recombination_rate should be less that 1, but {arg.l*arg.rho}"
         
-        self.data_generator = msprime.simulate(
-            sample_size=arg.sample_size,
-            recombination_rate=arg.rho,
-            mutation_rate=arg.mu,
-            random_seed=arg.random_seed,
-            model=arg.model,
-            length=arg.l,
-            num_replicates=arg.num_repl,
-            demographic_events=arg.demographic_events
-        )
+        #last_population_size = max(last_population_size * np.random.uniform(*POPULATION_COEFF_LIMITS),
+        #                           MIN_POPULATION_NUM)
+        
+        coeff = (np.random.uniform(*POPULATION_COEFF_LIMIT_COMPLEX))**(np.random.choice([-1, 1]))
+        # print(last_population_size)
+        last_population_size = min(max(last_population_size * coeff, MIN_POPULATION_NUM),MAX_POPULATION_NUM)
+
+        demography.add_population_parameters_change(
+            T, initial_size=last_population_size)
+        
+        coal_probability = non_coal_probability + t/last_population_size
+        coal_probability_list.append(coal_probability)
+        non_coal_probability = non_coal_probability + (-t/last_population_size)
+    return demography
+
+
+def generate_demographic_events(population: int = None) -> 'msprime.Demography':
+    
+    if not population:
+        population = give_population_size()
+    demography = msprime.Demography()
+    demography.add_population(name="A", initial_size=population)
+
+    number_of_events = np.random.randint(*NUMBER_OF_EVENTS_LIMITS)
+
+    times = sorted(np.random.exponential(LAMBDA_EXP, size=number_of_events))
+
+    last_population_size = population
+    for t in times:
+        last_population_size = max(last_population_size * np.random.uniform(*POPULATION_COEFF_LIMITS),
+                                   MIN_POPULATION_NUM)
+        demography.add_population_parameters_change(
+            t, initial_size=last_population_size)
+
+    return demography
+
+
+def simple_split(time: float, N: int, split_const: int = 5000) -> int:
+    return int(min(time//split_const, N-1))
+
+
+def exponent_split(time: float, N: int) -> int:
+    for i, limit in enumerate(limits):
+        if limit > time:
+            return i
+    return N-1 
+
+class DataGenerator():
+    def __init__(self,
+                 recombination_rate: float = RHO_HUMAN,
+                 mutation_rate: float = MU_HUMAN,
+                 demographic_events: list = None,
+                 population: int = None,
+                 number_intervals: int = N,
+                 splitter=simple_split,  # maust be annotiede
+                 num_replicates: int = 1,
+                 lengt: int = L_HUMAN,
+                 model: str = "hudson",
+                 random_seed: int = 42,
+                 sample_size: int = 1,
+                 ):
+
+        self.sample_size = sample_size
+        self.recombination_rate = recombination_rate
+        self.mutation_rate = mutation_rate
+        self.num_replicates = num_replicates
+        if not demographic_events:
+            if not population:
+                raise BaseException(
+                    "Eiter demographic_events or population must be speciefied")
+            demographic_events = msprime.Demography()
+            demographic_events.add_population(
+                name="A", initial_size=population)
+        self.demographic_events = demographic_events
+        self.splitter = splitter
+        self.model = model
+        self.len = lengt
+        self.random_seed = random_seed
+        self.number_intervals = number_intervals
+        self._data = None
+
+    def run_simulation(self):
+        """
+        return generator(tskit.TreeSequence)
+        function run the simulation with given parametrs
+        """
+        self._data = msprime.sim_ancestry(
+            recombination_rate=self.recombination_rate,
+            sequence_length=self.len,
+            num_replicates=self.num_replicates,
+            demography=self.demographic_events,
+            model=self.model,
+            random_seed=self.random_seed,
+            samples=self.sample_size)
+        return self._data
 
     def __iter__(self):
         return self
 
     def __next__(self):
+        """
+        return haplotype, recombination points and coalescent time
+        """
+        if self._data is None:
+            self.run_simulation()
+
         try:
-            replica = next(self.data_generator)
+            tree = next(self._data)
         except StopIteration:
             raise StopIteration
 
-        haplotype = [0] * self.arg.l
-        recombination_points = [0] * self.arg.l
-        coal_times = [0] * self.arg.l
+        mutated_ts = msprime.sim_mutations(
+            tree, rate=self.mutation_rate)  # random_seed
 
-        # get mutations
-        for mutation in replica.mutations():
-            point = round(mutation.position)
-            if point < self.arg.l:
-                haplotype[point] = 1
-            else:
-                haplotype[point - 1] = 1
+        #times = [0]*self.len
+        d_times = [0]*self.len
+        mutations = [0]*self.len
+        prior_dist = [0.0]*self.number_intervals
 
-        # get coal times and recombination points
+        for m in mutated_ts.mutations():
+            mutations[int(m.position)] = 1
 
-        for tree in replica.trees():
-            l, r = tree.get_interval()
-            l, r = int(l), int(r)
-            recombination_points[r - 1] = 1
-            coal_times[l:r] = [tree.total_branch_length] * (r-l)
+        for t in mutated_ts.aslist():
+            interval = t.get_interval()
+            left = interval.left
+            right = interval.right
+            time = t.get_total_branch_length()/2
+            #times[int(left):int(right)] = [time]*int(right-left)
+            d_times[int(left):int(right)] = [self.splitter(
+                time, self.number_intervals)]*int(right-left)
+            prior_dist[self.splitter(
+                time, self.number_intervals)] += (int(right-left))/self.len
 
-        # discrete times
-
-        min_t, max_t = min(coal_times), max(coal_times)
-
-        if max_t == min_t:
-            min_t = 0.0000001  # Почти ноль
-
-        a = (-np.log(max_t) + N*np.log(min_t))/(N-1)
-        B = (-np.log(min_t) + np.log(max_t))/(N-1)
-
-        def to_T(time):
-            return round((np.log(time)-a)/B)
-
-        step_of_discratization = max_t/N
-
-        def discretization(t):
-            return min(int(t/step_of_discratization) + 1, self.N)
-
-        d_times = [to_T(t) for t in coal_times]
-
-        prioty_distribution = [0.0 for i in range(N+1)]
-        for t in d_times:
-            prioty_distribution[t] += 1
-        prioty_distribution = [p/sum(prioty_distribution)
-                               for p in prioty_distribution]
-
-        intervals_starts = [np.e**(B*i+a) for i in range(N)]
-
-        main_data = {
-            'random_seed': RANDOM_SEED,
-            'prioty_distribution': prioty_distribution,
-            'intervals_starts': intervals_starts,
-            'recombination_rate': self.arg.rho,
-            'sample_size': self.arg.sample_size,
-            'matation_rate': self.arg.mu,
-            'num_replicates': self.arg.num_repl,
-            # 'demographic_events': self.demographic_events,
-            'model': self.arg.model,
-            'len': self.arg.l,
-            'N': N
-        }
-
-        json_object = json.dumps(main_data, indent=4)
-        with open(f"{RANDOM_SEED}_{tl.time()}s_exp_info.json", "w+") as outfile:
-            outfile.write(json_object)
-
-        return haplotype, d_times, recombination_points, prioty_distribution, intervals_starts
+        return mutations, d_times, prior_dist
 
 
 if __name__ == "__main__":
-    generator = Generator(arg)
 
+    num_model = int(sys.argv[6])
     x_path = os.path.join(sys.argv[1], "x")
     y_path = os.path.join(sys.argv[1], "y")
     pd_path = os.path.join(sys.argv[1], "PD")
-    is_path = os.path.join(sys.argv[1], "IS")
 
-    for name, i in tqdm(enumerate(generator)):
-        x = np.array(i[0], dtype=np.int64)
+    name = 0
+    print(f'Path: {sys.argv[1]}')
+    print(f"Num_model: {num_model}")
+    print(f"Num replicates: {sys.argv[2]}")
+    for j in range(num_model):
+        generator = DataGenerator(
+            demographic_events=generate_demographic_events_complex(),
+            splitter=exponent_split,
+            num_replicates= int(sys.argv[2])
+        )
+        generator.run_simulation()
+        # return mutations, times, None, prior_dist, None
+        for x, y, t in generator:
+            print(name)
+            x = np.array(x, dtype=np.int64)
+            y = np.array(y)
+            pd = np.array(t)
 
-        # one_hot = torch.zeros(arg.l, N)
-        # indices = np.array([np.arange(arg.l), np.array(i[1])-1], dtype=int)
-        # one_hot[indices] = 1.
-        # y = torch.FloatTensor(one_hot)
-        y = np.array(i[1], dtype=np.int64) - 1
-        pd = np.array(i[3])
-        is_ = np.array(i[4])
-
-        np.save(x_path + "/" + str(name), x)
-        np.save(y_path + "/" + str(name), y)
-        np.save(pd_path + "/" + str(name), pd)
-        np.save(is_path + "/" + str(name), is_)
+            np.save(x_path + "/" + str(name), x)
+            np.save(y_path + "/" + str(name), y)
+            np.save(pd_path + "/" + str(name), pd)
+            name += 1

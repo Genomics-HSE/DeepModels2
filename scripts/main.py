@@ -52,6 +52,7 @@ def lightning_test(model: pl.LightningModule,
         for i, (genome, target_weights) in enumerate(datamodule.test_dataset):
             genome = torch.from_numpy(genome)
             genome = genome.unsqueeze(0)
+            genome = genome.unsqueeze(2)
             distribution = model(genome)
             distribution = distribution.squeeze()
         
@@ -140,8 +141,6 @@ if __name__ == '__main__':
                                         project_name=args.cmt_project,
                                         save_dir=default_root_dir,
                                         offline=args.cmt_offline,
-                                        parse_args=False,
-                                        auto_metric_logging=False,
                                         disabled=args.cmt_disabled,
                                         experiment_name=model.name
                                         )
