@@ -53,6 +53,10 @@ def lightning_test(model: pl.LightningModule,
             genome = torch.from_numpy(genome)
             genome = genome.unsqueeze(0)
             genome = genome.unsqueeze(2)
+
+            X_batch = model.pad_input(X_batch, model.sqz_seq_len)
+            X_batch = torch.from_numpy(X_batch.astype('float32'))
+            
             distribution = model(genome)
             distribution = distribution.squeeze()
         
