@@ -137,6 +137,7 @@ class DataGenerator():
                  lengt: int = L_HUMAN,
                  model: str = "hudson",
                  random_seed: int = 42,
+                 mutation_random_seed: int = 42,
                  sample_size: int = 1,
                  ):
 
@@ -156,6 +157,7 @@ class DataGenerator():
         self.model = model
         self.len = lengt
         self.random_seed = random_seed
+        self.mutation_random_seed = mutation_random_seed
         self.number_intervals = number_intervals
         self._data = None
 
@@ -190,7 +192,9 @@ class DataGenerator():
             raise StopIteration
 
         mutated_ts = msprime.sim_mutations(
-            tree, rate=self.mutation_rate)  # random_seed
+            tree, rate=self.mutation_rate, random_seed=self.mutation_random_seed)  # random_seed
+        
+        self.mutation_random_seed += 1
 
         #times = [0]*self.len
         d_times = [0]*self.len
